@@ -79,6 +79,11 @@ See [ETHICS.md](ETHICS.md) for how Mancini & Nannoni's four principles
 system. The ethics monitor is not optional infrastructure; it is the core
 feature.
 
+## Research direction
+
+- [ADR 0002](docs/decisions/0002-self-play-research-track.md) — Self-play RL against SimCat as the v0.2+ research track, with mandatory sim-to-real validation.
+- [ADR 0003](docs/decisions/0003-habituation-calibration.md) — Habituation rates are placeholders; calibration requires real-cat session data (v0.4).
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).

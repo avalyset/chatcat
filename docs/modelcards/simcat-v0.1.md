@@ -12,7 +12,15 @@ any individual cat. Not validated against real behavioural data yet.
 - State transitions are Markov-like; real cats have memory and context.
 - Personality is static within a session; real cats modulate.
 - Pain behaviours are encoded but not fully integrated into transition logic.
-- Habituation is modelled as simple exponential decay.
+- Habituation is modelled as simple exponential decay. Habituation rate values
+  (0.005–0.015) are plausible placeholders, not empirically derived constants.
+  Calibration requires real-cat session data. See
+  [ADR 0003](../decisions/0003-habituation-calibration.md).
+- The five named archetypes are inspection presets, not a training distribution.
+  Future RL training must sample from the full continuous Feline Five space. See
+  [ADR 0002](../decisions/0002-self-play-research-track.md).
+- Sim-to-real gap is unmeasured until v0.4 (real-cat validation phase). Do not
+  treat simulator outcomes as predictions of real-cat behaviour.
 
 ## Parameters
 - Personality: Feline Five (Litchfield et al. 2017)
