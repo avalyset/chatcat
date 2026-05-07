@@ -28,6 +28,7 @@ export interface ChatCatAgent {
   getExplanation(): string;
   isInCooldown(): boolean;
   getCooldownRemainingTicks(): number;
+  reset(): void;
 }
 
 export function createAgent(): ChatCatAgent {
@@ -36,14 +37,20 @@ export function createAgent(): ChatCatAgent {
   let lastAction: AgentAction = idle();
   let explanation = 'Agent is idle. Waiting for SimCat to enter the arena.';
   let cooldownUntilTick = 0;
+  let lastTickCount = 0;
   let actionCycle = 0; // for varying actions in engagement
 
   function decide(catState: CatState): AgentAction {
     const obs = observer.observe(catState, agentPos.x, agentPos.y);
+    lastTickCount = catState.tickCount;
 
     // Cooldown check (CSS >= 6 triggered 60-min cooldown)
+    // cooldownUntilTick is an absolute sim-tick deadline, NOT a countdown.
+    // Remaining time = (deadline - currentTick) / tickRate / 60 minutes.
     if (cooldownUntilTick > catState.tickCount) {
-      explanation = `Agent in cooldown (CSS reached 6). ${Math.ceil((cooldownUntilTick - catState.tickCount) / 600)} min remaining.`;
+      const remainingTicks = cooldownUntilTick - catState.tickCount;
+      const remainingMinutes = Math.ceil(remainingTicks / 600);
+      explanation = `Agent in cooldown (CSS reached 6). ${remainingMinutes} min remaining.`;
       lastAction = idle();
       return lastAction;
     }
@@ -152,12 +159,20 @@ export function createAgent(): ChatCatAgent {
   }
 
   function isInCooldown(): boolean {
-    return cooldownUntilTick > 0;
+    return cooldownUntilTick > lastTickCount;
   }
 
   function getCooldownRemainingTicks(): number {
-    return Math.max(0, cooldownUntilTick);
+    return Math.max(0, cooldownUntilTick - lastTickCount);
   }
 
-  return { decide, getExplanation, isInCooldown, getCooldownRemainingTicks };
+  function reset(): void {
+    cooldownUntilTick = 0;
+    lastTickCount = 0;
+    lastAction = idle();
+    explanation = 'Agent is idle. Waiting for SimCat to enter the arena.';
+    actionCycle = 0;
+  }
+
+  return { decide, getExplanation, isInCooldown, getCooldownRemainingTicks, reset };
 }

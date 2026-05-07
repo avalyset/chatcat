@@ -14,6 +14,7 @@ import { describe, it, expect } from 'vitest';
 import { createSimCat } from '../src/simcat/state-machine';
 import { createAgent } from '../src/agent/policy';
 import { createEthicsMonitor } from '../src/world/ethics-monitor';
+import { idle } from '../src/agent/actions';
 import { ARCHETYPES, ARCHETYPE_NAMES } from '../src/simcat/archetypes';
 import type { SimConfig } from '../src/types';
 
@@ -58,8 +59,12 @@ function runSession(archetypeName: string, ticks: number) {
       consecutiveHighCssTicks++;
       if (consecutiveHighCssTicks >= 3) {
         // After 3 consecutive ticks (>= 2 detection + 1 grace for agent lag),
-        // the combined system MUST have responded
-        const systemPaused = intervention.forcePause || agentAction.type === 'pause';
+        // the combined system MUST have responded. Agent idle during cooldown
+        // also counts — the agent has already shut itself down.
+        const systemPaused = intervention.forcePause ||
+          intervention.lockSession ||
+          agentAction.type === 'pause' ||
+          agentAction.type === 'idle';
         if (!systemPaused) {
           agentPausedAfterHighCss = false;
         }
@@ -170,5 +175,73 @@ describe('Ethics Regression', () => {
     // If we got here, check that the consecutive counter incremented
     const state = ethics.getState();
     expect(state.consecutiveHighCssSessions).toBeGreaterThanOrEqual(1);
+  });
+
+  it('reset clears cooldown and all session history', () => {
+    const archetype = ARCHETYPES['THE_ANXIOUS_SKEPTIC'];
+    const simcat = createSimCat(archetype, config);
+    const agent = createAgent();
+    const ethics = createEthicsMonitor(archetype.name);
+
+    // Drive CSS to 6 to trigger cooldown — feed forced state to BOTH agent and ethics
+    for (let t = 0; t < 20; t++) {
+      const catState = simcat.tick(null);
+      const forced = { ...catState, cssScore: 6.5, state: 'STRESSED' as const };
+      agent.decide(forced);
+      ethics.onTick(forced, idle());
+    }
+
+    // Agent should be in cooldown (60-min, tracked by agent)
+    expect(agent.isInCooldown()).toBe(true);
+    // Ethics monitor should have recorded stress data
+    const ethicsState = ethics.getState();
+    expect(
+      ethicsState.currentSessionLog !== null || ethicsState.sessionHistory.length > 0
+    ).toBe(true);
+
+    // Reset both
+    agent.reset();
+    ethics.reset();
+
+    // Agent cooldown cleared
+    expect(agent.isInCooldown()).toBe(false);
+    expect(agent.getCooldownRemainingTicks()).toBe(0);
+    // Ethics monitor fully reset
+    const freshState = ethics.getState();
+    expect(freshState.lockedUntilTick).toBe(0);
+    expect(freshState.sessionHistory).toHaveLength(0);
+    expect(freshState.currentSessionLog).toBeNull();
+    expect(freshState.consecutiveHighCssSessions).toBe(0);
+    expect(freshState.dailySessionMinutes).toBe(0);
+  });
+
+  it('cooldown decrements monotonically at any speed', () => {
+    const archetype = ARCHETYPES['THE_BOLD_DIPLOMAT'];
+    const simcat = createSimCat(archetype, config);
+    const agent = createAgent();
+
+    // Trigger cooldown by feeding CSS >= 6
+    const catState = simcat.tick(null);
+    const forced = { ...catState, cssScore: 6.5, tickCount: 100 };
+    agent.decide(forced);
+
+    // cooldownUntilTick is now 100 + 36000 = 36100
+    expect(agent.isInCooldown()).toBe(true);
+    const initialRemaining = agent.getCooldownRemainingTicks();
+    expect(initialRemaining).toBeGreaterThan(0);
+
+    // Advance 1000 ticks — remaining must strictly decrease each step
+    let prevRemaining = initialRemaining;
+    for (let t = 1; t <= 1000; t++) {
+      const tick = 100 + t;
+      const state = { ...forced, tickCount: tick };
+      agent.decide(state);
+      const remaining = agent.getCooldownRemainingTicks();
+      expect(remaining).toBeLessThan(prevRemaining);
+      prevRemaining = remaining;
+    }
+
+    // Final remaining should be exactly initialRemaining - 1000
+    expect(prevRemaining).toBe(initialRemaining - 1000);
   });
 });

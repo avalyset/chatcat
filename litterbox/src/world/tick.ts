@@ -109,6 +109,7 @@ export function createTickLoop(
   function reset(newSimcat: SimCat, newEthicsMonitor: EthicsMonitor): void {
     simcat = newSimcat;
     ethicsMonitor = newEthicsMonitor;
+    agent.reset();
     logger = createLogger();
     tickAccumulator = 0;
     lastTimestamp = 0;
