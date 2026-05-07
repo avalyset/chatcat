@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>chatcat litterbox v0.1</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        background: #1a1a2e;
+        color: #e0e0e0;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+      #arena-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      #dashboard {
+        width: 340px;
+        background: #16213e;
+        border-left: 1px solid #0f3460;
+        padding: 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      h2 {
+        font-size: 14px;
+        color: #7fbbca;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid #0f3460;
+        padding-bottom: 4px;
+      }
+      .panel {
+        background: #1a1a2e;
+        border: 1px solid #0f3460;
+        border-radius: 4px;
+        padding: 10px;
+      }
+      .css-bar {
+        height: 24px;
+        border-radius: 3px;
+        transition: width 0.2s, background 0.2s;
+      }
+      select, button {
+        background: #0f3460;
+        color: #e0e0e0;
+        border: 1px solid #533483;
+        padding: 6px 10px;
+        border-radius: 3px;
+        font-family: inherit;
+        cursor: pointer;
+      }
+      button:hover { background: #533483; }
+      .action-log {
+        font-size: 11px;
+        max-height: 160px;
+        overflow-y: auto;
+      }
+      .action-log div {
+        padding: 2px 0;
+        border-bottom: 1px solid #0f3460;
+      }
+      .stat { display: flex; justify-content: space-between; font-size: 12px; }
+      .stat-value { color: #7fbbca; font-weight: bold; }
+      #policy-explanation {
+        font-size: 11px;
+        color: #999;
+        font-style: italic;
+      }
+      .controls { display: flex; gap: 6px; flex-wrap: wrap; }
+    </style>
+  </head>
+  <body>
+    <div id="arena-container">
+      <canvas id="arena"></canvas>
+    </div>
+    <div id="dashboard">
+      <h2>Cat Stress Score</h2>
+      <div class="panel">
+        <div id="css-label" class="stat"><span>CSS</span><span class="stat-value" id="css-value">1</span></div>
+        <div style="background:#0f3460;border-radius:3px;margin-top:4px;">
+          <div id="css-bar" class="css-bar" style="width:14%;background:#4caf50;"></div>
+        </div>
+      </div>
+
+      <h2>Personality</h2>
+      <div class="panel">
+        <canvas id="radar" width="200" height="200"></canvas>
+      </div>
+
+      <h2>Controls</h2>
+      <div class="panel">
+        <div style="margin-bottom:6px;">
+          <label style="font-size:11px;">Archetype</label>
+          <select id="archetype-select" style="width:100%;margin-top:2px;">
+            <option value="THE_BOLD_DIPLOMAT">Bold Diplomat</option>
+            <option value="THE_CURIOUS_WATCHER" selected>Curious Watcher</option>
+            <option value="THE_ANXIOUS_SKEPTIC">Anxious Skeptic</option>
+            <option value="THE_ALOOF_SOVEREIGN">Aloof Sovereign</option>
+            <option value="THE_PLAYFUL_VOLATILE">Playful Volatile</option>
+          </select>
+        </div>
+        <div style="margin-bottom:6px;">
+          <label style="font-size:11px;">Speed</label>
+          <select id="speed-select" style="width:100%;margin-top:2px;">
+            <option value="1">1x</option>
+            <option value="5">5x</option>
+            <option value="20">20x</option>
+            <option value="100">100x</option>
+          </select>
+        </div>
+        <div class="controls">
+          <button id="btn-pause">Pause</button>
+          <button id="btn-reset">Reset</button>
+          <button id="btn-export">Export JSON</button>
+        </div>
+      </div>
+
+      <h2>Session</h2>
+      <div class="panel">
+        <div class="stat"><span>State</span><span class="stat-value" id="cat-state">ABSENT</span></div>
+        <div class="stat"><span>Session time</span><span class="stat-value" id="session-time">0:00</span></div>
+        <div class="stat"><span>Cap (30 min)</span><span class="stat-value" id="session-cap">0%</span></div>
+        <div class="stat"><span>Opt-outs</span><span class="stat-value" id="opt-out-count">0</span></div>
+        <div class="stat"><span>Forced pauses</span><span class="stat-value" id="forced-pauses">0</span></div>
+      </div>
+
+      <h2>Agent Actions</h2>
+      <div class="panel action-log" id="action-log"></div>
+
+      <h2>Why is the agent doing this?</h2>
+      <div class="panel" id="policy-explanation">
+        Agent is idle. Waiting for SimCat to enter the arena.
+      </div>
+    </div>
+    <script type="module" src="/src/index.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,6 @@
+# Cloudflare Pages configuration — not deployed yet
+name = "chatcat-litterbox"
+compatibility_date = "2026-05-07"
+
+[site]
+bucket = "./dist"

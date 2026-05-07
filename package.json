@@ -1,0 +1,13 @@
+{
+  "name": "chatcat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ethological simulator for testing ACI agent policies against simulated cats",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "pnpm --filter litterbox dev",
+    "build": "pnpm --filter litterbox build",
+    "test": "pnpm --filter litterbox test",
+    "test:watch": "pnpm --filter litterbox test:watch"
+  }
+}
