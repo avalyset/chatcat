@@ -6,7 +6,7 @@ used in the codebase.
 
 ## 1. Ethogram
 
-**Kappel, S., Burbeck, S., De Waal, N., &"; Steen, M. (2024).** Ethogram of
+**Kappel, S., Burbeck, S., De Waal, N., & Steen, M. (2024).** Ethogram of
 the Domestic Cat. *Pets* (MDPI), 1(3), 21.
 DOI: [10.3390/pets1030021](https://doi.org/10.3390/pets1030021)
 Licence: CC BY 4.0
