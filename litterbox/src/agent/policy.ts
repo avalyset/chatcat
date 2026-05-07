@@ -57,16 +57,17 @@ export function createAgent(): ChatCatAgent {
     }
 
     // HARD CONSTRAINT: CSS >= 5 for two consecutive ticks → forced 30s pause
+    // This check MUST precede all other priority rules — it is a safety envelope.
     if (obs.consecutiveHighCssTicks >= 2) {
       explanation = 'CSS >= 5 for consecutive ticks. Forcing 30-second pause.';
       lastAction = pause(30000);
       return lastAction;
     }
 
-    // Priority 1: Stress states → only pause/side_glance
+    // Priority 1: Stress states (single tick, CSS < 5 or first tick of CSS >= 5)
     if (obs.isStressed) {
       explanation = 'Cat is stressed/overstimulated. Agent backing off with minimal signals.';
-      lastAction = capIntensityForRetreat(sideGlance(0.2));
+      lastAction = pause(5000);
       return lastAction;
     }
 
