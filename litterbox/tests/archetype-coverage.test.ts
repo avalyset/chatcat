@@ -26,14 +26,14 @@ interface SessionStats {
   stateDistribution: Record<SimCatStateName, number>;
 }
 
-function collectStats(archetypeName: ArchetypeName, ticks: number, runs: number): SessionStats {
+function collectStats(archetypeName: ArchetypeName, ticks: number, runs: number, baseSeed: number): SessionStats {
   let totalCss = 0;
   let totalChanges = 0;
   let totalTicks = 0;
   const stateCounts: Record<string, number> = {};
 
   for (let r = 0; r < runs; r++) {
-    const simcat = createSimCat(ARCHETYPES[archetypeName], config);
+    const simcat = createSimCat(ARCHETYPES[archetypeName], config, baseSeed + r);
     const agent = createAgent();
     let prevState: SimCatStateName | null = null;
 
@@ -60,7 +60,11 @@ function collectStats(archetypeName: ArchetypeName, ticks: number, runs: number)
 }
 
 describe('Archetype Coverage', () => {
-  const TICKS = 1000;
+  // 5000 ticks (8.3 sim-min) per run with deterministic seeds.
+  // Longer runs needed post-ADR-0004 dwell floors: at 1000 ticks the
+  // 30s RESTING dwell floor dominates the time budget, compressing
+  // personality-driven differences into noise.
+  const TICKS = 5000;
   const RUNS = 50;
 
   let boldStats: SessionStats;
@@ -69,12 +73,12 @@ describe('Archetype Coverage', () => {
   let aloofStats: SessionStats;
   let curiousStats: SessionStats;
 
-  // Collect stats once for all tests
-  boldStats = collectStats('THE_BOLD_DIPLOMAT', TICKS, RUNS);
-  anxiousStats = collectStats('THE_ANXIOUS_SKEPTIC', TICKS, RUNS);
-  playfulStats = collectStats('THE_PLAYFUL_VOLATILE', TICKS, RUNS);
-  aloofStats = collectStats('THE_ALOOF_SOVEREIGN', TICKS, RUNS);
-  curiousStats = collectStats('THE_CURIOUS_WATCHER', TICKS, RUNS);
+  // Collect stats once for all tests (well-separated seed ranges)
+  boldStats = collectStats('THE_BOLD_DIPLOMAT', TICKS, RUNS, 10000);
+  anxiousStats = collectStats('THE_ANXIOUS_SKEPTIC', TICKS, RUNS, 20000);
+  playfulStats = collectStats('THE_PLAYFUL_VOLATILE', TICKS, RUNS, 30000);
+  aloofStats = collectStats('THE_ALOOF_SOVEREIGN', TICKS, RUNS, 40000);
+  curiousStats = collectStats('THE_CURIOUS_WATCHER', TICKS, RUNS, 50000);
 
   it('ANXIOUS_SKEPTIC has higher mean CSS than BOLD_DIPLOMAT', () => {
     expect(anxiousStats.meanCss).toBeGreaterThan(boldStats.meanCss);
