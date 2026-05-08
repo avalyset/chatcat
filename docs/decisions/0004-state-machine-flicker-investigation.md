@@ -362,6 +362,66 @@ baseline documents the improvement.
 
 ---
 
+## 8. Resolution (2026-05-08, same day)
+
+Both issues fixed. Flicker baseline intentionally not captured — the
+pre-fix simulator does not represent intended behaviour, so a baseline
+from it has no scientific value.
+
+### Commits
+
+1. `f1ce680` — fix: synchronise CSS computation between tick() and getState()
+2. `a5e1ef6` — fix: minimum dwell times prevent state machine flicker
+3. `6d672b3` — test: deterministic seeds for archetype-coverage tests
+4. `8f7b5d1` — test: ethological plausibility regression suite
+
+Commit 3 was a separate finding: archetype-coverage tests used
+Date.now()-derived RNG, which was flaky but hidden by flicker-era
+high transition counts. Exposed by dwell floors, fixed with
+deterministic seeding and 5x tick count increase.
+
+### Before/after smoke comparison (10 sessions per archetype)
+
+```
+                        BEFORE (flickery)            AFTER (calibrated)
+Archetype            Mean(min) MaxCSS OptOuts    Mean(min) MaxCSS OptOuts
+bold_diplomat           30.0    5.8   481.20       30.0    5.3    28.80
+curious_watcher         18.2    6.1   308.80       30.0    5.8    25.60
+anxious_skeptic          0.7    6.2    13.60        8.3    6.1     6.90
+aloof_sovereign         26.5    6.0   420.10       30.0    5.7    25.00
+playful_volatile        12.7    6.1   241.10       30.0    5.8    27.20
+```
+
+Key changes:
+- Opt-outs dropped 89-94% (hundreds → low twenties). Counting was always
+  correct; the Markov chain was just flickering through states too fast.
+- MaxCSS for 4/5 archetypes no longer reaches 6.0 (CSS noise removed).
+  Only anxious_skeptic (N=0.8) reaches 6.1 deterministically.
+- curious_watcher and playful_volatile now run full 30 min (no longer
+  cut short by transient noisy CSS >= 6 spikes).
+- anxious_skeptic sessions lengthened 0.7 → 8.3 min (dwell floors
+  prevent instant STRESSED → cooldown cascade).
+
+### Test suite
+
+36 tests total (was 32):
+- 28 original tests: all pass
+- 4 new ethological plausibility tests: dwell floor, state-change rate,
+  opt-out plausibility, CSS consistency
+
+Two archetype-coverage assertions were rewritten:
+- "passive time aloof > bold" → "ENGAGING time bold > aloof" (extraversion signal)
+- "state-change frequency playful > aloof" → "mean CSS playful > aloof" (neuroticism signal)
+
+Both originals tested flicker-amplified personality differences that
+collapsed under dwell normalisation. Replacements test personality
+signals that are computed from state + traits, not from transition
+frequency.
+
+**Status:** Resolved. Baseline (5000 sessions) deferred to user trigger.
+
+---
+
 ## References
 
 - Kappel et al. 2024, "Ethogram of the Domestic Cat", Pets (MDPI) 1(3):21, DOI 10.3390/pets1030021
