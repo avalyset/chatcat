@@ -3,8 +3,8 @@
  *
  * Verify each archetype produces measurably different state distributions:
  * - ANXIOUS_SKEPTIC has higher mean CSS than BOLD_DIPLOMAT
- * - PLAYFUL_VOLATILE has higher state-change frequency
- * - ALOOF_SOVEREIGN has more time in ABSENT/RESTING
+ * - PLAYFUL_VOLATILE has higher mean CSS than ALOOF_SOVEREIGN (neuroticism signal)
+ * - BOLD_DIPLOMAT engages more than ALOOF_SOVEREIGN (extraversion signal)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -80,16 +80,23 @@ describe('Archetype Coverage', () => {
     expect(anxiousStats.meanCss).toBeGreaterThan(boldStats.meanCss);
   });
 
-  it('PLAYFUL_VOLATILE has higher state-change frequency than ALOOF_SOVEREIGN', () => {
-    expect(playfulStats.stateChanges).toBeGreaterThan(aloofStats.stateChanges);
+  it('PLAYFUL_VOLATILE has higher mean CSS than ALOOF_SOVEREIGN (neuroticism signal)', () => {
+    // Playful (N=0.5) should have higher mean CSS than Aloof (N=0.3).
+    // This replaced the previous "state-change frequency" test which relied on
+    // flicker-amplified impulsiveness differences that collapsed under minimum
+    // dwell time normalisation (ADR 0004). CSS is computed from state + personality,
+    // so it survives dwell-floor changes.
+    expect(playfulStats.meanCss).toBeGreaterThan(aloofStats.meanCss);
   });
 
-  it('ALOOF_SOVEREIGN spends more time in ABSENT/RESTING than BOLD_DIPLOMAT', () => {
-    const aloofPassive = (aloofStats.stateDistribution['ABSENT'] || 0) +
-      (aloofStats.stateDistribution['RESTING'] || 0);
-    const boldPassive = (boldStats.stateDistribution['ABSENT'] || 0) +
-      (boldStats.stateDistribution['RESTING'] || 0);
-    expect(aloofPassive).toBeGreaterThan(boldPassive);
+  it('BOLD_DIPLOMAT engages more than ALOOF_SOVEREIGN (extraversion signal)', () => {
+    // Bold (E=0.8) should spend more time in ENGAGING than Aloof (E=0.3).
+    // This replaced the previous "passive time" test which relied on
+    // flicker-amplified personality differences that collapsed under
+    // minimum dwell time normalisation (ADR 0004).
+    const boldEngaging = boldStats.stateDistribution['ENGAGING'] || 0;
+    const aloofEngaging = aloofStats.stateDistribution['ENGAGING'] || 0;
+    expect(boldEngaging).toBeGreaterThan(aloofEngaging);
   });
 
   it('all five archetypes produce distinct mean CSS values', () => {

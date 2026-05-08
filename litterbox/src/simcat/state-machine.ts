@@ -44,6 +44,28 @@ export interface SimCat {
   reset(): void;
 }
 
+// Minimum dwell time per state (in ticks at 10 Hz).
+// Transitions are only evaluated after the cat has been in the current state
+// for at least this many ticks. Prevents sub-second "flicker" between states.
+//
+// Calibration basis (ADR 0004):
+// - No published transition-rate data exists for domestic cats at this granularity
+// - Accelerometer floor: shortest recorded behaviour (jumping) = 0.89s (Smit et al. 2023)
+// - Values below are conservative estimates from ethological inference, not direct literature
+// - These are constants, not config — changing them requires a calibration decision
+const MIN_DWELL_TICKS: Record<SimCatStateName, number> = {
+  ABSENT:          50,  // 5.0 s — cat is genuinely away, not flickering
+  RESTING:        300,  // 30.0 s — rest bouts avg ~65 s (Morrison et al. 2024); 30 is conservative
+  ALERT:           20,  // 2.0 s — orienting response persists for seconds
+  CURIOUS:         30,  // 3.0 s — investigation takes sustained attention
+  APPROACHING:     20,  // 2.0 s — physical movement toward agent
+  ENGAGING:        50,  // 5.0 s — play/interaction bouts last seconds to minutes
+  OVERSTIMULATED:  15,  // 1.5 s — transient by definition, but still visible
+  STRESSED:        20,  // 2.0 s — distress persists, not instantaneous
+  RETREATING:      20,  // 2.0 s — withdrawal is a deliberate, observable act
+  LEAVING:         30,  // 3.0 s — walking away from the arena takes time
+};
+
 // Transition table: from-state → array of [to-state, base-probability]
 type TransitionTable = Record<SimCatStateName, [SimCatStateName, number][]>;
 
@@ -245,6 +267,7 @@ export function createSimCat(archetype: Archetype, config: SimConfig, seed?: num
   let position: Position = { x: -50, y: config.arenaHeight / 2 };
   let tickCount = 0;
   let sessionStartTick = 0;
+  let ticksInCurrentState = 0;
 
   function habituationFactor(): number {
     // Exponential decay over sim-minutes
@@ -254,18 +277,31 @@ export function createSimCat(archetype: Archetype, config: SimConfig, seed?: num
 
   function tick(agentAction: AgentAction | null): CatState {
     tickCount++;
+    ticksInCurrentState++;
 
     const agentIntensity = agentAction ? agentAction.intensity : 0;
     const hab = habituationFactor();
 
-    // Get transitions and apply personality
-    const baseTransitions = BASE_TRANSITIONS[currentState];
-    const modified = applyPersonalityModifiers(
-      baseTransitions, archetype, currentState, agentIntensity, hab
-    );
+    // Minimum dwell time gate: only consider transitions after the cat
+    // has been in the current state long enough. The RNG is still consumed
+    // to keep the PRNG sequence deterministic regardless of dwell gate.
+    const minDwell = MIN_DWELL_TICKS[currentState];
+    if (ticksInCurrentState >= minDwell) {
+      const baseTransitions = BASE_TRANSITIONS[currentState];
+      const modified = applyPersonalityModifiers(
+        baseTransitions, archetype, currentState, agentIntensity, hab
+      );
 
-    // Sample next state
-    currentState = sampleTransition(modified, rng());
+      const previousState = currentState;
+      currentState = sampleTransition(modified, rng());
+
+      if (currentState !== previousState) {
+        ticksInCurrentState = 0;
+      }
+    } else {
+      // Consume the RNG to maintain deterministic sequence
+      rng();
+    }
 
     // Track session start
     if (currentState !== 'ABSENT' && position.x < 0) {
@@ -329,6 +365,7 @@ export function createSimCat(archetype: Archetype, config: SimConfig, seed?: num
     position = { x: -50, y: config.arenaHeight / 2 };
     tickCount = 0;
     sessionStartTick = 0;
+    ticksInCurrentState = 0;
   }
 
   return { tick, getState, reset };
