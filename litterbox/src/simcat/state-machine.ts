@@ -275,9 +275,12 @@ export function createSimCat(archetype: Archetype, config: SimConfig, seed?: num
     // Update position
     position = updatePosition(position, currentState, agentPos, rng, config);
 
-    // Compute CSS
-    const cssNoise = (rng() - 0.5) * 2;
-    const cssScore = computeCssScore(currentState, archetype.personality, cssNoise);
+    // Compute CSS — deterministic, no random noise.
+    // Noise was removed (ADR 0004): it caused agent and ethics monitor to see
+    // different CSS values, violating the transparency guarantee. If stochastic
+    // CSS perturbation is reintroduced, it must be shared by both tick() and
+    // getState() via stored state, not recomputed independently.
+    const cssScore = computeCssScore(currentState, archetype.personality, 0);
     const indicators = cssToIndicators(cssScore);
 
     // Roll vocalisation
