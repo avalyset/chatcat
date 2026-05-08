@@ -7,12 +7,16 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "batch": "tsx src/cli/batch.ts",
+    "batch:smoke": "tsx src/cli/batch.ts --sessions 10 --quiet",
+    "batch:baseline": "tsx src/cli/batch.ts --sessions 1000"
   },
   "dependencies": {
     "pixi.js": "^8.6.6"
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "typescript": "^5.7.3",
     "vite": "^6.3.4",
     "vitest": "^3.1.3"
