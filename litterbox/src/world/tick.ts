@@ -1,6 +1,9 @@
 /**
  * Tick loop — coordinates SimCat, Agent, and Ethics Monitor per tick.
  * Runs at config.tickRate Hz, scaled by config.simSpeed.
+ *
+ * Uses the shared TickRunner for pure simulation logic; this module
+ * adds browser timing (requestAnimationFrame) and visualisation updates.
  */
 
 import type { SimConfig } from '../types';
@@ -10,7 +13,7 @@ import type { EthicsMonitor } from './ethics-monitor';
 import type { ArenaRenderer } from '../viz/arena';
 import type { DashboardUpdater } from '../viz/dashboard';
 import { createLogger, type Logger } from './logger';
-import { idle, pause as pauseAction } from '../agent/actions';
+import { createTickRunner, type TickRunner } from './tick-runner';
 
 export interface TickLoop {
   start(): void;
@@ -31,32 +34,14 @@ export function createTickLoop(
   let simcat = initialSimcat;
   let ethicsMonitor = initialEthicsMonitor;
   let logger: Logger = createLogger();
+  let tickRunner: TickRunner = createTickRunner(simcat, agent, ethicsMonitor, logger);
   let paused = false;
   let animationId: number | null = null;
   let tickAccumulator = 0;
   let lastTimestamp = 0;
 
   function processTick(): void {
-    // Get agent decision
-    let agentAction = agent.decide(simcat.getState());
-
-    // Ethics monitor checks (INDEPENDENT of agent — cannot be bypassed)
-    const catState = simcat.tick(agentAction);
-    const intervention = ethicsMonitor.onTick(catState, agentAction);
-
-    // Ethics monitor overrides agent
-    if (intervention.lockSession) {
-      agentAction = idle();
-    } else if (intervention.forcePause) {
-      agentAction = pauseAction(intervention.pauseDuration_ms);
-    } else if (intervention.dailyCapReached) {
-      agentAction = idle();
-    }
-
-    // Log
-    logger.log(catState.tickCount, catState, agentAction, intervention);
-
-    // Update visualisation
+    const { catState, agentAction, intervention } = tickRunner.runOneTick();
     arena.update(catState, agentAction);
     dashboard.update(catState, agentAction, ethicsMonitor.getState(), agent.getExplanation(), intervention);
   }
@@ -111,6 +96,7 @@ export function createTickLoop(
     ethicsMonitor = newEthicsMonitor;
     agent.reset();
     logger = createLogger();
+    tickRunner = createTickRunner(simcat, agent, ethicsMonitor, logger);
     tickAccumulator = 0;
     lastTimestamp = 0;
   }

@@ -237,8 +237,8 @@ function updatePosition(
   return { x, y };
 }
 
-export function createSimCat(archetype: Archetype, config: SimConfig): SimCat {
-  const rng = createRng();
+export function createSimCat(archetype: Archetype, config: SimConfig, seed?: number): SimCat {
+  const rng = createRng(seed);
   const agentPos: Position = { x: config.arenaWidth - 80, y: config.arenaHeight / 2 };
 
   let currentState: SimCatStateName = 'ABSENT';
