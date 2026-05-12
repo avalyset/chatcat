@@ -17,8 +17,8 @@ Licence: CC BY 4.0
 
 ## 2. Feline Five personality model
 
-**Litchfield, C. A., Quinton, G., Tindle, H., Chiera, B., Senior, K. H., &
-Gaultier, E. (2017).** The 'Feline Five': An exploration of personality in pet
+**Litchfield, C. A., Quinton, G., Tindle, H., Chiera, B., Kikillus, K. H., &
+Roetman, P. (2017).** The 'Feline Five': An exploration of personality in pet
 cats (*Felis catus*). *PLOS ONE*, 12(8), e0183455.
 DOI: [10.1371/journal.pone.0183455](https://doi.org/10.1371/journal.pone.0183455)
 
