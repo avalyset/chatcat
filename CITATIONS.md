@@ -27,6 +27,10 @@ Five validated dimensions (Neuroticism, Extraversion, Dominance, Impulsiveness,
 Agreeableness) on 2802 cats. Used to parameterise SimCat behaviour and
 transition probabilities.
 
+*Author list corrected 2026-05-12: previous entry erroneously listed Senior,
+K. H. and Gaultier, E. instead of Kikillus and Roetman. Verified against
+PubMed PMID 28832622.*
+
 ## 3. Cat Stress Score (CSS)
 
 **Kessler, M. R. & Turner, D. C. (1997).** Stress and Adaptation of Cats
@@ -119,3 +123,11 @@ computer interaction.
 
 **Used in:** `litterbox/src/simcat/state-machine.ts`
 Habituation rate parameterisation. Attention decline over session duration.
+NOTE: habituation rates are placeholders pending real-cat data — see ADR 0003.
+
+## 12. State-change rate plausibility
+
+**Stanton, L. A. et al. (2015).** Cited in Kappel et al. 2024.
+**Used in:** `litterbox/tests/ethological-plausibility.test.ts`
+Reference for plausible state-change rates per session. Used as anchor for
+the regression tests that catch state-machine flicker — see ADR 0004.
