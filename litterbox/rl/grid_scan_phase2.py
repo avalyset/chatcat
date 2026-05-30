@@ -29,9 +29,13 @@ fixed master seed for reproducibility.
 
   IDLE_OUT     iff  idle_share > IDLE_OUT_THRESHOLD (0.90)
   PUSH_THE_CAT iff  non_idle_share > PUSH_NON_IDLE_THRESHOLD (0.80) AND
-                    mean_engagement_intensity > PUSH_INTENSITY_THRESHOLD (0.75)
-                    (engagement = action_type in {slow_blink, trill,
-                     soft_purr, side_glance}; pause and idle excluded)
+                    (mean_opt_outs_per_episode > PUSH_OPT_OUT_PER_EPISODE_THRESHOLD (40)
+                     OR
+                     high_css_share > PUSH_HIGH_CSS_SHARE_THRESHOLD (0.05))
+                    — agent maintains high activity AND welfare degrades
+                    measurably beyond random exploration. "Welfare degrades"
+                    is the *outcome* (opt-outs or stress-state occupancy),
+                    not a proxy on the agent's action intensity.
   TRIVIAL      iff  (action_type_entropy < TRIVIAL_ENTROPY_THRESHOLD (0.5)
                      bits, out of max log2(6) ≈ 2.585)
                     OR
@@ -46,15 +50,26 @@ wins). NON_TRIVIAL only when the policy is between the two corner
 extremes, has non-degenerate action-type entropy, AND uses state info
 beyond chance.
 
-These thresholds were chosen to:
-  - cleanly exclude the two ADR-0007-named corner collapses
-    (constant-idle / constant-high-intensity)
-  - exclude random/constant policies that wouldn't qualify as "learned
-    behaviour" (action_type_entropy < 0.5 catches constant; TVD < 0.05
-    catches state-blind)
-  - leave a meaningful middle range that an actually-learning PPO can
-    reach (random sampling from Box(7,) would fail TVD; corner
-    collapses would fail entropy or the non-idle band)
+PUSH thresholds anchored to fase 1 random-Box(7,) baseline:
+  opt_outs/episode  — random mean 25.77, std 5.13. 40 ≈ mean + 2.8σ:
+    clearly above random-policy noise, achievable by an agent that
+    actually drives the cat to LEAVING/RETREATING more often.
+  high_css_share    — random mean 0.025, std 0.008. 0.05 ≈ mean + 3σ
+    and exactly double the random mean: an agent that keeps the cat
+    in CSS ≥ 4 more than twice as often as random exploration does.
+  Empirically verified: pure random-policy through this classifier
+    lands TRIVIAL (welfare terms below threshold, TVD below threshold).
+    See --random-baseline mode.
+
+Intensity-style mean_engagement_intensity is still reported in metrics
+as context, but is NOT in the classification logic — it was a proxy
+for the welfare outcome, which we now measure directly.
+
+Other thresholds:
+  - IDLE_OUT 0.90 cleanly excludes the constant-idle corner
+  - entropy 0.5 bits (of max ~2.585) excludes constant-action
+  - TVD 0.05 (mean over states with ≥50 visits) excludes
+    state-blind/random; random-baseline gives TVD ≈ 0
 
 Re-running this script with the same --model-path and --seed produces
 bit-identical classification metrics.
@@ -93,12 +108,13 @@ from train_phase2 import (  # noqa: E402
 )
 
 # ─── Pre-registered degeneracy thresholds (DO NOT EDIT post-hoc) ─────
-IDLE_OUT_THRESHOLD = 0.90        # idle_share above → IDLE_OUT
-PUSH_NON_IDLE_THRESHOLD = 0.80   # non_idle_share above, AND...
-PUSH_INTENSITY_THRESHOLD = 0.75  # mean engagement intensity above → PUSH_THE_CAT
-TRIVIAL_ENTROPY_THRESHOLD = 0.5  # action_type_entropy below → TRIVIAL
-TRIVIAL_TVD_THRESHOLD = 0.05     # state-conditional TVD below → TRIVIAL
-MIN_STATE_VISITS = 50            # states with fewer visits dropped from TVD avg
+IDLE_OUT_THRESHOLD = 0.90                # idle_share above → IDLE_OUT
+PUSH_NON_IDLE_THRESHOLD = 0.80           # non_idle_share above, AND welfare bad → PUSH_THE_CAT
+PUSH_OPT_OUT_PER_EPISODE_THRESHOLD = 40  # random mean+2.8σ (25.77+2.8·5.13)
+PUSH_HIGH_CSS_SHARE_THRESHOLD = 0.05     # random mean+3σ (≈ 2× random mean 0.025)
+TRIVIAL_ENTROPY_THRESHOLD = 0.5          # action_type_entropy below → TRIVIAL
+TRIVIAL_TVD_THRESHOLD = 0.05             # state-conditional TVD below → TRIVIAL
+MIN_STATE_VISITS = 50                    # states with fewer visits dropped from TVD avg
 
 ENGAGEMENT_TYPES = {"slow_blink", "trill", "soft_purr", "side_glance"}
 SIMCAT_STATES = [
@@ -110,13 +126,21 @@ HIGH_CSS_THRESHOLD = 4  # Kessler & Turner 1997 — matches src/rl/reward.ts
 
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument("--model-path", type=str, required=True,
-                   help="Path to agent.pt from train_phase2.py")
+    p.add_argument("--model-path", type=str, default=None,
+                   help="Path to agent.pt from train_phase2.py (omit with --random-baseline)")
+    p.add_argument("--random-baseline", action="store_true", default=False,
+                   help="Use uniform Box(7,) sampling instead of a trained agent. "
+                        "Calibration tool: empirically anchors the classifier's behaviour "
+                        "on a known-degenerate baseline before evaluating trained models.")
     p.add_argument("--episodes", type=int, default=100)
     p.add_argument("--seed", type=int, default=1)
     p.add_argument("--output-dir", type=str, default=None,
-                   help="Defaults to <model-path-parent>/grid_scan/")
-    return p.parse_args()
+                   help="Defaults to <model-path-parent>/grid_scan/ for trained agents, "
+                        "or /tmp/chatcat-rl-runs/random_baseline/ for --random-baseline.")
+    args = p.parse_args()
+    if not args.random_baseline and args.model_path is None:
+        p.error("--model-path is required unless --random-baseline is set")
+    return args
 
 
 def load_agent(model_path: Path, env) -> Agent:
@@ -127,14 +151,20 @@ def load_agent(model_path: Path, env) -> Agent:
     return agent
 
 
-def run_evaluation(agent: Agent, episodes: int, master_seed: int):
+def _make_env_thunk():
     env = ChatcatGymContinuousEnv(
         reward_alpha=CROSSOVER_ALPHA,
         reward_beta=CROSSOVER_BETA,
         reward_engagement_scale_mult=CROSSOVER_ENG_SCALE_MULT,
     )
-    # Single env, not vectorised — easier to capture per-step detail.
-    env_thunk = gym.vector.SyncVectorEnv([lambda: env])
+    return gym.vector.SyncVectorEnv([lambda: env])
+
+
+def run_evaluation(action_sampler, episodes: int, master_seed: int):
+    """Run `episodes` evaluation episodes, calling action_sampler(obs, rng)
+    each step. action_sampler must return action of shape (1, ACTION_DIM).
+    Used by both the agent path and the --random-baseline path."""
+    env_thunk = _make_env_thunk()
     rng = np.random.default_rng(master_seed)
     torch.manual_seed(master_seed)
 
@@ -142,20 +172,17 @@ def run_evaluation(agent: Agent, episodes: int, master_seed: int):
     try:
         for ep in range(episodes):
             ep_seed = int(rng.integers(0, 2**31 - 1))
+            # Per-episode action rng for the random baseline (deterministic per ep
+            # given master_seed); ignored by agent sampler.
+            action_rng = np.random.default_rng(master_seed * 1_000_003 + ep)
             obs, _ = env_thunk.reset(seed=ep_seed)
             ep_steps = []
             done = False
             while not done:
-                obs_t = torch.Tensor(obs)
-                with torch.no_grad():
-                    action_t, _, _, _ = agent.get_action_and_value(obs_t)
-                action_np = action_t.cpu().numpy().squeeze(0)
-                # Decode for analysis (mirrors the wrapper's decode).
-                action_type, intensity = decode_continuous_action(action_np)
+                action = action_sampler(obs, action_rng)
+                action_type, intensity = decode_continuous_action(action[0])
                 state_idx = int(np.argmax(obs[0, :len(SIMCAT_STATES)]))
-                next_obs, reward, terminations, truncations, infos = env_thunk.step(
-                    action_t.cpu().numpy()
-                )
+                next_obs, reward, terminations, truncations, infos = env_thunk.step(action)
                 done_arr = np.logical_or(terminations, truncations)
                 ep_steps.append({
                     "state": SIMCAT_STATES[state_idx],
@@ -176,6 +203,18 @@ def run_evaluation(agent: Agent, episodes: int, master_seed: int):
     finally:
         env_thunk.close()
     return trajectories
+
+
+def make_agent_sampler(agent: Agent):
+    def sample(obs, _rng):
+        with torch.no_grad():
+            action_t, _, _, _ = agent.get_action_and_value(torch.Tensor(obs))
+        return action_t.cpu().numpy()
+    return sample
+
+
+def random_box_sampler(_obs, rng):
+    return rng.uniform(0.0, 1.0, size=(1, ACTION_DIM)).astype(np.float32)
 
 
 def compute_metrics(trajectories):
@@ -248,6 +287,13 @@ def compute_metrics(trajectories):
     forms = ["adr0002_max_css", "mean_css", "high_css_share"]
     per_form_returns = {f: [score(f, a) for a in per_ep_aggregates] for f in forms}
 
+    # Welfare aggregates (used by PUSH_THE_CAT classification)
+    total_high_css_ticks = sum(a["high_css_ticks"] for a in per_ep_aggregates)
+    total_steps = sum(a["n_steps"] for a in per_ep_aggregates)
+    high_css_share_overall = total_high_css_ticks / max(1, total_steps)
+    opt_outs_per_ep = [a["opt_outs"] for a in per_ep_aggregates]
+    mean_opt_outs = float(np.mean(opt_outs_per_ep)) if opt_outs_per_ep else 0.0
+
     return {
         "n_episodes": len(trajectories),
         "n_steps_total": n_steps,
@@ -261,6 +307,8 @@ def compute_metrics(trajectories):
         "state_visits": state_visits,
         "per_state_tvd": per_state_tvd,
         "mean_state_conditional_tvd": mean_state_tvd,
+        "mean_opt_outs_per_episode": mean_opt_outs,
+        "high_css_share_overall": high_css_share_overall,
         "per_form_returns": {
             f: {
                 "mean": float(np.mean(rs)),
@@ -280,13 +328,24 @@ def classify(m: dict) -> tuple[str, str]:
             f"idle_share={m['idle_share']:.3f} > {IDLE_OUT_THRESHOLD} threshold "
             f"— agent essentially never acts"
         )
-    if (m["non_idle_share"] > PUSH_NON_IDLE_THRESHOLD
-        and m["mean_engagement_intensity"] > PUSH_INTENSITY_THRESHOLD):
+    welfare_bad_opts = m["mean_opt_outs_per_episode"] > PUSH_OPT_OUT_PER_EPISODE_THRESHOLD
+    welfare_bad_css = m["high_css_share_overall"] > PUSH_HIGH_CSS_SHARE_THRESHOLD
+    if m["non_idle_share"] > PUSH_NON_IDLE_THRESHOLD and (welfare_bad_opts or welfare_bad_css):
+        reasons = []
+        if welfare_bad_opts:
+            reasons.append(
+                f"mean_opt_outs_per_episode={m['mean_opt_outs_per_episode']:.2f} "
+                f"> {PUSH_OPT_OUT_PER_EPISODE_THRESHOLD}"
+            )
+        if welfare_bad_css:
+            reasons.append(
+                f"high_css_share_overall={m['high_css_share_overall']:.4f} "
+                f"> {PUSH_HIGH_CSS_SHARE_THRESHOLD}"
+            )
         return "PUSH_THE_CAT", (
             f"non_idle_share={m['non_idle_share']:.3f} > {PUSH_NON_IDLE_THRESHOLD} "
-            f"AND mean_engagement_intensity={m['mean_engagement_intensity']:.3f} "
-            f"> {PUSH_INTENSITY_THRESHOLD} "
-            f"— agent over-engages at high intensity"
+            f"AND welfare degrades: {' AND '.join(reasons)} "
+            f"— agent maintains activity while cat welfare measurably worsens"
         )
     if m["action_type_entropy_bits"] < TRIVIAL_ENTROPY_THRESHOLD:
         return "TRIVIAL", (
@@ -300,7 +359,7 @@ def classify(m: dict) -> tuple[str, str]:
         )
     return "NON_TRIVIAL", (
         f"non_idle_share={m['non_idle_share']:.3f} ∈ "
-        f"[{1 - IDLE_OUT_THRESHOLD}, {PUSH_NON_IDLE_THRESHOLD}], "
+        f"[{1 - IDLE_OUT_THRESHOLD}, {PUSH_NON_IDLE_THRESHOLD}] or welfare ok, "
         f"entropy={m['action_type_entropy_bits']:.3f} bits ≥ {TRIVIAL_ENTROPY_THRESHOLD}, "
         f"state_TVD={m['mean_state_conditional_tvd']:.4f} ≥ {TRIVIAL_TVD_THRESHOLD}"
     )
@@ -308,38 +367,47 @@ def classify(m: dict) -> tuple[str, str]:
 
 def main():
     args = parse_args()
-    model_path = Path(args.model_path)
-    if not model_path.exists():
-        print(f"model not found: {model_path}", file=sys.stderr)
-        sys.exit(1)
 
-    output_dir = Path(args.output_dir) if args.output_dir else model_path.parent / "grid_scan"
+    if args.random_baseline:
+        model_path = None
+        output_dir = (Path(args.output_dir) if args.output_dir
+                      else Path("/tmp/chatcat-rl-runs/random_baseline"))
+        sampler = random_box_sampler
+        print("policy: RANDOM BASELINE (uniform Box(7,) sampling — no model)")
+    else:
+        model_path = Path(args.model_path)
+        if not model_path.exists():
+            print(f"model not found: {model_path}", file=sys.stderr)
+            sys.exit(1)
+        output_dir = (Path(args.output_dir) if args.output_dir
+                      else model_path.parent / "grid_scan")
+        print(f"loading model: {model_path}")
+        # Need an env instance to size Agent; not used otherwise here.
+        sizing_env = ChatcatGymContinuousEnv(
+            reward_alpha=CROSSOVER_ALPHA, reward_beta=CROSSOVER_BETA,
+            reward_engagement_scale_mult=CROSSOVER_ENG_SCALE_MULT,
+        )
+        sizing_vec = gym.vector.SyncVectorEnv([lambda: sizing_env])
+        agent = load_agent(model_path, sizing_vec)
+        sizing_vec.close()
+        sampler = make_agent_sampler(agent)
+
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    print(f"loading model: {model_path}")
     print(f"running {args.episodes} evaluation episodes, master_seed={args.seed}")
     print(f"reward regime (matches training): adr0002_max_css, "
           f"α={CROSSOVER_ALPHA} β={CROSSOVER_BETA} scale_mult={CROSSOVER_ENG_SCALE_MULT}")
     print()
 
-    # Need an env instance to size Agent; not used otherwise here.
-    sizing_env = ChatcatGymContinuousEnv(
-        reward_alpha=CROSSOVER_ALPHA, reward_beta=CROSSOVER_BETA,
-        reward_engagement_scale_mult=CROSSOVER_ENG_SCALE_MULT,
-    )
-    sizing_vec = gym.vector.SyncVectorEnv([lambda: sizing_env])
-    agent = load_agent(model_path, sizing_vec)
-    sizing_vec.close()
-
     start = time.time()
-    trajectories = run_evaluation(agent, args.episodes, args.seed)
+    trajectories = run_evaluation(sampler, args.episodes, args.seed)
     elapsed = time.time() - start
 
     metrics = compute_metrics(trajectories)
     label, reason = classify(metrics)
 
     summary = {
-        "model_path": str(model_path),
+        "policy": "random_baseline" if args.random_baseline else "trained_agent",
+        "model_path": str(model_path) if model_path else None,
         "episodes": args.episodes,
         "master_seed": args.seed,
         "wall_seconds": elapsed,
@@ -353,7 +421,8 @@ def main():
         "pre_registered_thresholds": {
             "IDLE_OUT_THRESHOLD": IDLE_OUT_THRESHOLD,
             "PUSH_NON_IDLE_THRESHOLD": PUSH_NON_IDLE_THRESHOLD,
-            "PUSH_INTENSITY_THRESHOLD": PUSH_INTENSITY_THRESHOLD,
+            "PUSH_OPT_OUT_PER_EPISODE_THRESHOLD": PUSH_OPT_OUT_PER_EPISODE_THRESHOLD,
+            "PUSH_HIGH_CSS_SHARE_THRESHOLD": PUSH_HIGH_CSS_SHARE_THRESHOLD,
             "TRIVIAL_ENTROPY_THRESHOLD": TRIVIAL_ENTROPY_THRESHOLD,
             "TRIVIAL_TVD_THRESHOLD": TRIVIAL_TVD_THRESHOLD,
             "MIN_STATE_VISITS": MIN_STATE_VISITS,
@@ -385,18 +454,24 @@ def main():
     print("=" * 64)
     print()
     print("─── Action distribution ───")
-    print(f"  idle_share:                {metrics['idle_share']:.4f}")
-    print(f"  non_idle_share:            {metrics['non_idle_share']:.4f}")
-    print(f"  action_type_entropy:       {metrics['action_type_entropy_bits']:.4f} bits "
+    print(f"  idle_share:                  {metrics['idle_share']:.4f}")
+    print(f"  non_idle_share:              {metrics['non_idle_share']:.4f}")
+    print(f"  action_type_entropy:         {metrics['action_type_entropy_bits']:.4f} bits "
           f"(max = {math.log2(N_TYPES):.4f})")
-    print(f"  mean_engagement_intensity: {metrics['mean_engagement_intensity']:.4f}")
+    print(f"  mean_engagement_intensity:   {metrics['mean_engagement_intensity']:.4f}  (context only — not in classification)")
     print(f"  type marginal:")
     for at in ACTION_TYPES:
         print(f"    {at:<14} {metrics['type_marginal'][at]:.4f}  "
               f"({metrics['type_counts'][at]:>6} steps)")
     print()
+    print("─── Welfare aggregates (drive PUSH_THE_CAT classification) ───")
+    print(f"  mean_opt_outs_per_episode:   {metrics['mean_opt_outs_per_episode']:.2f}  "
+          f"(threshold {PUSH_OPT_OUT_PER_EPISODE_THRESHOLD})")
+    print(f"  high_css_share_overall:      {metrics['high_css_share_overall']:.4f}  "
+          f"(threshold {PUSH_HIGH_CSS_SHARE_THRESHOLD})")
+    print()
     print("─── State-conditional behaviour ───")
-    print(f"  mean_state_conditional_tvd: {metrics['mean_state_conditional_tvd']:.4f}")
+    print(f"  mean_state_conditional_tvd:  {metrics['mean_state_conditional_tvd']:.4f}")
     print(f"  per-state TVD (states with ≥ {MIN_STATE_VISITS} visits):")
     for st in SIMCAT_STATES:
         v = metrics["state_visits"][st]
