@@ -125,6 +125,20 @@ def main():
     print(f"  lambda_10:            {last_lam:.6e}")
     print(f"  ratio_10:             {last_ratio:.6e}")
     print(f"  lambda_10 / lambda_1: {last_lam / top_lam:.6e}")
+    print()
+
+    # PC1 and PC2 loadings: per-state weights, sorted by absolute value.
+    # pca.components_ has shape (n_components, n_features); each row is a unit
+    # eigenvector in the original 10-dim state-share basis. Sign is arbitrary
+    # (PCA returns one of two valid orientations per axis).
+    for pc_idx in (0, 1):
+        comp = pca.components_[pc_idx]
+        order = np.argsort(-np.abs(comp))
+        print(f"PC{pc_idx + 1} loadings (sorted by |weight|, sign as returned by sklearn)")
+        print(f"  {'state':<16} {'weight':>12}  {'|weight|':>12}")
+        for j in order:
+            print(f"  {STATE_ORDER[j]:<16} {comp[j]:>+12.6f}  {abs(comp[j]):>12.6f}")
+        print()
 
 
 if __name__ == "__main__":
