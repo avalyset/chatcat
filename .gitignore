@@ -6,3 +6,7 @@ dist/
 .env
 .env.local
 batch-results/
+
+# Python (rl/ tree)
+__pycache__/
+*.pyc
