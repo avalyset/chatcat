@@ -50,6 +50,8 @@ interface EpisodeStats {
   max_css: number;
   opt_outs: number;
   mean_css: number;
+  css_sum: number;                 // raw integer-ish sum; preserves precision for grid scan
+  high_css_ticks: number;          // raw count of ticks with css >= HIGH_CSS_THRESHOLD
   high_css_share: number;          // fraction of ticks with css >= HIGH_CSS_THRESHOLD
   forced_pauses: number;
   // Episode-level reward computed under each reward form on the SAME trajectory.
@@ -119,10 +121,24 @@ function runEpisode(
     max_css: lastInfo!.max_css_so_far,
     opt_outs: lastInfo!.cumulative_opt_outs,
     mean_css: cssSum / Math.max(1, steps),
+    css_sum: cssSum,
+    high_css_ticks: highCssTicks,
     high_css_share: highCssTicks / Math.max(1, steps),
     forced_pauses: forcedPauses,
     returns_by_form: returnsByForm,
     action_type_counts: actionCounts,
+  };
+}
+
+function aggregatesFromStats(e: EpisodeStats, tickRate: number): EpisodeAggregates {
+  return {
+    episode_steps: e.steps,
+    tick_rate: tickRate,
+    engagement_ticks: e.engagement_ticks,
+    css_sum: e.css_sum,
+    high_css_ticks: e.high_css_ticks,
+    max_css: e.max_css,
+    opt_outs: e.opt_outs,
   };
 }
 
@@ -153,6 +169,92 @@ function fmt(s: SummaryStats): string {
   );
 }
 
+// ─── Grid scan over reward-parameter space ─────────────────────────────
+// Trajectories under random actions are independent of (α, β, scale), so
+// one env run is enough — we just re-score the captured aggregates under
+// each (form, α, β, scale) tuple. 81 grid points × 3 forms shown together;
+// per-form for systematic reading, plus a global top-15 by |r_eng| at the
+// end so the regimes where engagement actually matters surface directly.
+
+const GRID_ALPHAS = [0.5, 1, 2];
+const GRID_BETAS = [0.1, 0.5, 1];
+const GRID_SCALES = [1, 5, 20];
+
+interface GridRow {
+  form: string;
+  alpha: number;
+  beta: number;
+  scale: number;
+  r_eng: number;
+  r_opt: number;
+}
+
+function runGridScan(episodes: EpisodeStats[], tickRate: number): void {
+  const aggregates = episodes.map(e => aggregatesFromStats(e, tickRate));
+  const engagementMinutes = episodes.map(e => e.engagement_minutes);
+  const optOuts = episodes.map(e => e.opt_outs);
+  const formNames = Object.keys(EPISODE_REWARD_FORMS);
+  const allRows: GridRow[] = [];
+
+  for (const form of formNames) {
+    const fn = EPISODE_REWARD_FORMS[form];
+    console.log('─────────────────────────────────────────────────────────────');
+    console.log(`Reward form: ${form}`);
+    console.log('─────────────────────────────────────────────────────────────');
+    console.log(
+      `  ${'α'.padStart(5)}  ${'β'.padStart(5)}  ${'scale'.padStart(6)}   ` +
+      `${'|r(ret,eng)|'.padStart(13)}  ${'|r(ret,opt)|'.padStart(13)}  ` +
+      `${'ratio_eng/opt'.padStart(14)}`
+    );
+    for (const alpha of GRID_ALPHAS) {
+      for (const beta of GRID_BETAS) {
+        for (const scale of GRID_SCALES) {
+          const params: EpisodeRewardParams = { alpha, beta, engagement_scale: scale / (tickRate * 60) };
+          // engagement_scale interpretation: passing `scale` in {1,5,20} re-weights
+          // the engagement_minutes term by that factor relative to the ADR default
+          // (1/(tickRate*60)). scale=1 reproduces the previous run.
+          const returns = aggregates.map(a => fn(a, params));
+          const rEng = pearson(returns, engagementMinutes);
+          const rOpt = pearson(returns, optOuts);
+          const ratio = Math.abs(rOpt) > 1e-9 ? Math.abs(rEng) / Math.abs(rOpt) : Infinity;
+          allRows.push({ form, alpha, beta, scale, r_eng: rEng, r_opt: rOpt });
+          console.log(
+            `  ${alpha.toFixed(1).padStart(5)}  ${beta.toFixed(1).padStart(5)}  ` +
+            `${String(scale).padStart(6)}   ` +
+            `${Math.abs(rEng).toFixed(4).padStart(13)}  ` +
+            `${Math.abs(rOpt).toFixed(4).padStart(13)}  ` +
+            `${ratio.toFixed(4).padStart(14)}`
+          );
+        }
+      }
+    }
+    console.log('');
+  }
+
+  // Top 15 by |r_eng| across the full grid — engagement-dominant regimes.
+  console.log('─────────────────────────────────────────────────────────────');
+  console.log('Top 15 (form, α, β, scale) by |r(return, engagement_minutes)|');
+  console.log('─────────────────────────────────────────────────────────────');
+  console.log(
+    `  ${'#'.padStart(3)}  ${'form'.padEnd(16)}  ${'α'.padStart(5)}  ${'β'.padStart(5)}  ` +
+    `${'scale'.padStart(6)}   ${'|r_eng|'.padStart(10)}  ${'|r_opt|'.padStart(10)}  ` +
+    `${'r_eng'.padStart(9)}  ${'r_opt'.padStart(9)}`
+  );
+  const sorted = [...allRows].sort((a, b) => Math.abs(b.r_eng) - Math.abs(a.r_eng));
+  for (let i = 0; i < Math.min(15, sorted.length); i++) {
+    const r = sorted[i];
+    console.log(
+      `  ${String(i + 1).padStart(3)}  ${r.form.padEnd(16)}  ${r.alpha.toFixed(1).padStart(5)}  ` +
+      `${r.beta.toFixed(1).padStart(5)}  ${String(r.scale).padStart(6)}   ` +
+      `${Math.abs(r.r_eng).toFixed(4).padStart(10)}  ` +
+      `${Math.abs(r.r_opt).toFixed(4).padStart(10)}  ` +
+      `${(r.r_eng >= 0 ? '+' : '−') + Math.abs(r.r_eng).toFixed(4)}  ` +
+      `${(r.r_opt >= 0 ? '+' : '−') + Math.abs(r.r_opt).toFixed(4)}`
+    );
+  }
+  console.log('');
+}
+
 function pearson(xs: number[], ys: number[]): number {
   const n = xs.length;
   if (n < 2) return 0;
@@ -181,6 +283,7 @@ function main(): void {
       'habituation-rate': { type: 'string', default: '0.010' },
       output: { type: 'string' },
       quiet: { type: 'boolean', default: false },
+      grid: { type: 'boolean', default: false },
     },
     strict: true,
   });
@@ -265,6 +368,18 @@ function main(): void {
 
   // ─── Reward-form comparison ────────────────────────────────────────
   const formNames = Object.keys(EPISODE_REWARD_FORMS);
+
+  if (values.grid) {
+    runGridScan(episodes, env.config.tickRate);
+    console.log(`Wall time: ${(wallMs / 1000).toFixed(1)}s  (${Math.round(N / (wallMs / 1000))} episodes/sec)`);
+    if (values.output) {
+      mkdirSync(dirname(values.output), { recursive: true });
+      const lines = episodes.map(e => JSON.stringify(e));
+      writeFileSync(values.output, lines.join('\n') + '\n', 'utf-8');
+      console.log(`Per-episode JSONL: ${values.output}`);
+    }
+    return;
+  }
 
   console.log('─────────────────────────────────────────────────────────────');
   console.log('Episode return per reward form (same trajectories)');
