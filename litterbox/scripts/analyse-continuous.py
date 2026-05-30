@@ -140,6 +140,123 @@ def main():
             print(f"  {STATE_ORDER[j]:<16} {comp[j]:>+12.6f}  {abs(comp[j]):>12.6f}")
         print()
 
+    # ─── Pairwise distributional structure (KL-based MDS) ──────────────
+    # Choice of symmetric divergence: Jensen-Shannon, not averaged-KL.
+    # Rationale:
+    # (1) JS is bounded (0, ln 2] in nats; averaged-KL is unbounded and
+    #     blows up whenever one distribution puts near-zero mass on a state
+    #     the other visits — both common here (e.g. ABSENT vs RESTING-heavy
+    #     sessions). The unbounded tail of averaged-KL would dominate the
+    #     pairwise matrix and the MDS spectrum, drowning structural signal.
+    # (2) sqrt(JS) is a proper metric (Endres & Schindelin 2003), so
+    #     classical MDS on D = sqrt(JS) has a well-defined geometric
+    #     interpretation — eigenvalues of the double-centred Gram matrix
+    #     read as squared embedding scales, with negative eigenvalues
+    #     quantifying non-Euclidean residue.
+    # (3) Numerically robust at the floor we use below.
+    run_kl_mds(X)
+
+
+def run_kl_mds(X: np.ndarray) -> None:
+    n = X.shape[0]
+
+    # Epsilon floor. The smallest non-zero share in this dataset is
+    # 1 / max_ticks = 1/18000 ~ 5.6e-5. EPS = 1e-12 sits ~7 orders of
+    # magnitude below that, so it prevents log(0) without perturbing the
+    # observed distributional structure. After flooring we renormalise so
+    # rows remain probability distributions (sum to 1).
+    EPS = 1e-12
+    P = X + EPS
+    P = P / P.sum(axis=1, keepdims=True)
+    print(f"KL-MDS preprocessing")
+    print(f"  epsilon floor:    {EPS:.0e}")
+    print(f"  smallest pre-floor non-zero share: {X[X > 0].min():.3e}")
+    print(f"  rows renormalised to sum 1 after flooring")
+    print()
+
+    # Pairwise Jensen-Shannon divergence via broadcasting.
+    # JS(P_i, P_j) = 0.5 * (KL(P_i || M) + KL(P_j || M)), M = (P_i + P_j)/2.
+    # Memory: (n, n, k) doubles. For n=1000, k=10 → ~80 MB.
+    Pi = P[:, None, :]
+    Pj = P[None, :, :]
+    M = 0.5 * (Pi + Pj)
+    log_Pi = np.log(Pi)
+    log_Pj = np.log(Pj)
+    log_M = np.log(M)
+    kl_im = np.sum(Pi * (log_Pi - log_M), axis=2)
+    kl_jm = np.sum(Pj * (log_Pj - log_M), axis=2)
+    JS = 0.5 * (kl_im + kl_jm)
+    # Numerical hygiene: clip tiny negatives from FP cancellation, zero diagonal.
+    JS = np.clip(JS, 0.0, None)
+    np.fill_diagonal(JS, 0.0)
+
+    # JS-distance (a true metric) for classical MDS.
+    D = np.sqrt(JS)
+
+    # JS-divergence sanity stats (off-diagonal).
+    iu = np.triu_indices(n, k=1)
+    js_off = JS[iu]
+    print(f"Pairwise JS divergence (nats; theoretical max = ln 2 ≈ {np.log(2):.4f})")
+    print(f"  pairs:        {js_off.size}")
+    print(f"  min:          {js_off.min():.6e}")
+    print(f"  median:       {np.median(js_off):.6e}")
+    print(f"  mean:         {js_off.mean():.6e}")
+    print(f"  max:          {js_off.max():.6e}")
+    print()
+
+    # Classical (Torgerson) MDS on D:
+    #   B = -0.5 * H * D^2 * H,   H = I - (1/n) * 1 1^T
+    # Eigenvalues of B are the squared scales of the embedding. For a true
+    # Euclidean distance matrix, all eigenvalues are >= 0; negative
+    # eigenvalues quantify how far D is from Euclidean-embeddable.
+    D2 = D * D
+    H = np.eye(n) - np.ones((n, n)) / n
+    B = -0.5 * H @ D2 @ H
+    # Force symmetry to absorb FP asymmetry.
+    B = 0.5 * (B + B.T)
+    eigvals_all = np.linalg.eigvalsh(B)  # ascending
+    eigvals_all = eigvals_all[::-1]      # descending
+
+    total_abs = np.abs(eigvals_all).sum()
+    pos = eigvals_all[eigvals_all > 0]
+    neg = eigvals_all[eigvals_all < 0]
+    total_pos = pos.sum()
+    total_neg_abs = (-neg).sum() if neg.size else 0.0
+
+    print(f"Classical MDS on D = sqrt(JS) — eigenvalues of -0.5 H D^2 H (n={n})")
+    print(f"  total positive mass:        {total_pos:.6e}")
+    print(f"  total |negative| mass:      {total_neg_abs:.6e}")
+    print(f"  negative / positive ratio:  {total_neg_abs / total_pos:.6e}")
+    print(f"  count of negative eigvals:  {neg.size}")
+    print()
+
+    TOP = 20
+    print(f"Top {TOP} eigenvalues")
+    print(f"  {'k':>3}  {'eigenvalue':>14}  {'ratio(pos)':>12}  {'cum(pos)':>12}")
+    cum = 0.0
+    for k, lam in enumerate(eigvals_all[:TOP], start=1):
+        ratio = lam / total_pos if lam > 0 else float('nan')
+        if lam > 0:
+            cum += ratio
+        print(f"  {k:>3}  {lam:>+14.6e}  {ratio:>12.6f}  {cum:>12.6f}")
+    print()
+
+    # Coverage milestones over positive eigenvalues (which are the
+    # ones with a geometric reading in classical MDS).
+    pos_sorted = np.sort(pos)[::-1]
+    pos_cum = np.cumsum(pos_sorted) / total_pos
+    for thresh in (0.80, 0.90, 0.95, 0.99, 0.999):
+        idx = int(np.searchsorted(pos_cum, thresh) + 1)
+        print(f"  components for cum(pos) >= {thresh:.3f}: {idx}")
+    print()
+
+    # Participation ratio over positive eigenvalues.
+    pr_pos = (pos.sum() ** 2) / (pos ** 2).sum()
+    # Participation ratio over all eigenvalues (signed); using |lam|.
+    pr_abs = (np.abs(eigvals_all).sum() ** 2) / (eigvals_all ** 2).sum()
+    print(f"Participation ratio (positive eigvals only):  {pr_pos:.4f}")
+    print(f"Participation ratio (|eigvals|, all {n}):       {pr_abs:.4f}")
+
 
 if __name__ == "__main__":
     main()
