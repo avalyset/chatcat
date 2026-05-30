@@ -20,6 +20,12 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { createEnv, type StepInfo } from '../rl/env';
 import { ACTION_SPACE, decodeAction } from '../rl/encoders';
+import {
+  EPISODE_REWARD_FORMS,
+  HIGH_CSS_THRESHOLD,
+  type EpisodeAggregates,
+  type EpisodeRewardParams,
+} from '../rl/reward';
 
 function mulberry32(seed: number): () => number {
   let s = seed >>> 0;
@@ -38,13 +44,16 @@ interface EpisodeStats {
   action_seed: number;
   steps: number;
   ended_reason: NonNullable<StepInfo['ended_reason']>;
-  episode_return: number;
+  episode_return: number;          // env's per-step adr0002Reward summed
   engagement_ticks: number;
   engagement_minutes: number;
   max_css: number;
   opt_outs: number;
   mean_css: number;
+  high_css_share: number;          // fraction of ticks with css >= HIGH_CSS_THRESHOLD
   forced_pauses: number;
+  // Episode-level reward computed under each reward form on the SAME trajectory.
+  returns_by_form: Record<string, number>;
   // per-action-type counts for sanity (uniform sampling -> ~equal counts)
   action_type_counts: Record<string, number>;
 }
@@ -53,13 +62,15 @@ function runEpisode(
   env: ReturnType<typeof createEnv>,
   envSeed: number,
   actionSeed: number,
-  episodeIndex: number
+  episodeIndex: number,
+  rewardParams: EpisodeRewardParams
 ): EpisodeStats {
   env.reset(envSeed);
   const actionRng = mulberry32(actionSeed);
 
   let cumEngagement = 0;
   let cssSum = 0;
+  let highCssTicks = 0;
   let forcedPauses = 0;
   const actionCounts: Record<string, number> = {};
   let lastInfo: StepInfo | null = null;
@@ -74,10 +85,26 @@ function runEpisode(
     const result = env.step(action);
     cumEngagement += result.info.per_step_engagement;
     cssSum += result.info.per_step_css;
+    if (result.info.per_step_css >= HIGH_CSS_THRESHOLD) highCssTicks++;
     if (result.info.ethics_intervention.force_pause) forcedPauses++;
     lastInfo = result.info;
     steps++;
     if (result.done) break;
+  }
+
+  const aggregates: EpisodeAggregates = {
+    episode_steps: steps,
+    tick_rate: env.config.tickRate,
+    engagement_ticks: cumEngagement,
+    css_sum: cssSum,
+    high_css_ticks: highCssTicks,
+    max_css: lastInfo!.max_css_so_far,
+    opt_outs: lastInfo!.cumulative_opt_outs,
+  };
+
+  const returnsByForm: Record<string, number> = {};
+  for (const [name, fn] of Object.entries(EPISODE_REWARD_FORMS)) {
+    returnsByForm[name] = fn(aggregates, rewardParams);
   }
 
   return {
@@ -92,7 +119,9 @@ function runEpisode(
     max_css: lastInfo!.max_css_so_far,
     opt_outs: lastInfo!.cumulative_opt_outs,
     mean_css: cssSum / Math.max(1, steps),
+    high_css_share: highCssTicks / Math.max(1, steps),
     forced_pauses: forcedPauses,
+    returns_by_form: returnsByForm,
     action_type_counts: actionCounts,
   };
 }
@@ -124,6 +153,23 @@ function fmt(s: SummaryStats): string {
   );
 }
 
+function pearson(xs: number[], ys: number[]): number {
+  const n = xs.length;
+  if (n < 2) return 0;
+  const mx = xs.reduce((a, b) => a + b, 0) / n;
+  const my = ys.reduce((a, b) => a + b, 0) / n;
+  let num = 0, dx2 = 0, dy2 = 0;
+  for (let i = 0; i < n; i++) {
+    const dx = xs[i] - mx;
+    const dy = ys[i] - my;
+    num += dx * dy;
+    dx2 += dx * dx;
+    dy2 += dy * dy;
+  }
+  const denom = Math.sqrt(dx2 * dy2);
+  return denom > 0 ? num / denom : 0;
+}
+
 function main(): void {
   const { values } = parseArgs({
     options: {
@@ -151,14 +197,16 @@ function main(): void {
     process.exit(1);
   }
 
+  const envRewardParams: EpisodeRewardParams = {
+    alpha,
+    beta,
+    engagement_scale: 1 / (10 * 60), // 10 Hz default config
+  };
+
   const env = createEnv({
     maxTicks,
     habituationRate,
-    rewardParams: {
-      alpha,
-      beta,
-      engagement_scale: 1 / (10 * 60), // 10 Hz default config
-    },
+    rewardParams: envRewardParams,
   });
 
   const master = mulberry32(masterSeed);
@@ -168,7 +216,7 @@ function main(): void {
   for (let i = 0; i < N; i++) {
     const envSeed = Math.floor(master() * 0x100000000) >>> 0;
     const actionSeed = Math.floor(master() * 0x100000000) >>> 0;
-    const stats = runEpisode(env, envSeed, actionSeed, i);
+    const stats = runEpisode(env, envSeed, actionSeed, i, envRewardParams);
     episodes.push(stats);
 
     if (!values.quiet) {
@@ -200,19 +248,83 @@ function main(): void {
   );
   console.log('+-----------------------------------------------------------+');
   console.log('');
-  console.log('Episode return       ', fmt(summarise(episodes.map(e => e.episode_return))));
-  console.log('engagement_minutes   ', fmt(summarise(episodes.map(e => e.engagement_minutes))));
-  console.log('max_CSS              ', fmt(summarise(episodes.map(e => e.max_css))));
-  console.log('opt_outs             ', fmt(summarise(episodes.map(e => e.opt_outs))));
-  console.log('mean_CSS             ', fmt(summarise(episodes.map(e => e.mean_css))));
-  console.log('episode_length_ticks ', fmt(summarise(episodes.map(e => e.steps))));
-  console.log('forced_pauses        ', fmt(summarise(episodes.map(e => e.forced_pauses))));
+  console.log('Raw episode components (same trajectory under all reward forms)');
+  console.log('  engagement_minutes   ', fmt(summarise(episodes.map(e => e.engagement_minutes))));
+  console.log('  max_CSS              ', fmt(summarise(episodes.map(e => e.max_css))));
+  console.log('  mean_CSS             ', fmt(summarise(episodes.map(e => e.mean_css))));
+  console.log(`  high_css_share (>=${HIGH_CSS_THRESHOLD}) `, fmt(summarise(episodes.map(e => e.high_css_share))));
+  console.log('  opt_outs             ', fmt(summarise(episodes.map(e => e.opt_outs))));
+  console.log('  episode_length_ticks ', fmt(summarise(episodes.map(e => e.steps))));
+  console.log('  forced_pauses        ', fmt(summarise(episodes.map(e => e.forced_pauses))));
   console.log('');
   console.log(
     'Termination split:  ' +
     Object.entries(endedCounts).map(([k, v]) => `${k}=${v}`).join(', ')
   );
   console.log('');
+
+  // ─── Reward-form comparison ────────────────────────────────────────
+  const formNames = Object.keys(EPISODE_REWARD_FORMS);
+
+  console.log('─────────────────────────────────────────────────────────────');
+  console.log('Episode return per reward form (same trajectories)');
+  console.log('─────────────────────────────────────────────────────────────');
+  for (const form of formNames) {
+    const vals = episodes.map(e => e.returns_by_form[form]);
+    const s = summarise(vals);
+    console.log(`  ${form.padEnd(20)} ${fmt(s)}  var=${(s.std * s.std).toFixed(4)}`);
+  }
+  // Sanity: env's per-step adr0002Reward summed should ≈ adr0002 episode form.
+  // Discrepancy = the per-step delta_max_css decomposition's FP rounding.
+  const envReturns = episodes.map(e => e.episode_return);
+  const adrReturns = episodes.map(e => e.returns_by_form['adr0002_max_css']);
+  const diffs = envReturns.map((v, i) => Math.abs(v - adrReturns[i]));
+  const maxDiff = Math.max(...diffs);
+  console.log('');
+  console.log(`Sanity: max |env per-step adr0002 sum − episode adr0002| = ${maxDiff.toExponential(3)}`);
+  console.log('');
+
+  // Correlations: episode return (under each form) vs raw components
+  const components: Array<[string, number[]]> = [
+    ['engagement_minutes', episodes.map(e => e.engagement_minutes)],
+    ['max_CSS',            episodes.map(e => e.max_css)],
+    ['mean_CSS',           episodes.map(e => e.mean_css)],
+    ['high_css_share',     episodes.map(e => e.high_css_share)],
+    ['opt_outs',           episodes.map(e => e.opt_outs)],
+    ['episode_length',     episodes.map(e => e.steps)],
+  ];
+
+  console.log('─────────────────────────────────────────────────────────────');
+  console.log('Pearson correlation: episode_return ↔ raw component');
+  console.log('─────────────────────────────────────────────────────────────');
+  const header = '  ' + 'component'.padEnd(22) + formNames.map(f => f.padStart(18)).join('');
+  console.log(header);
+  console.log('  ' + '-'.repeat(22 + 18 * formNames.length));
+  for (const [name, vals] of components) {
+    const row = '  ' + name.padEnd(22) + formNames.map(form => {
+      const returns = episodes.map(e => e.returns_by_form[form]);
+      const r = pearson(returns, vals);
+      const sign = r >= 0 ? '+' : '−';
+      return (sign + Math.abs(r).toFixed(4)).padStart(18);
+    }).join('');
+    console.log(row);
+  }
+  console.log('');
+
+  // Pairwise correlation between the three forms' episode returns
+  console.log('─────────────────────────────────────────────────────────────');
+  console.log('Pairwise reward-form return correlation (Pearson)');
+  console.log('─────────────────────────────────────────────────────────────');
+  for (let i = 0; i < formNames.length; i++) {
+    for (let j = i + 1; j < formNames.length; j++) {
+      const a = episodes.map(e => e.returns_by_form[formNames[i]]);
+      const b = episodes.map(e => e.returns_by_form[formNames[j]]);
+      const r = pearson(a, b);
+      console.log(`  ${formNames[i].padEnd(20)} ↔ ${formNames[j].padEnd(20)}  ${r >= 0 ? '+' : '−'}${Math.abs(r).toFixed(4)}`);
+    }
+  }
+  console.log('');
+
   console.log(`Wall time: ${(wallMs / 1000).toFixed(1)}s  (${Math.round(N / (wallMs / 1000))} episodes/sec)`);
 
   if (values.output) {
