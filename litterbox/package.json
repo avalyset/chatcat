@@ -11,7 +11,8 @@
     "typecheck:cli": "tsc -p tsconfig.cli.json --noEmit",
     "batch": "tsx src/cli/batch.ts",
     "batch:smoke": "tsx src/cli/batch.ts --sessions 10 --quiet",
-    "batch:baseline": "tsx src/cli/batch.ts --sessions 1000"
+    "batch:baseline": "tsx src/cli/batch.ts --sessions 1000",
+    "batch:continuous": "tsx src/cli/batch.ts --continuous --samples 1000 --master-seed 1"
   },
   "dependencies": {
     "pixi.js": "^8.6.6"
