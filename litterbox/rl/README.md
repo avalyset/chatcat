@@ -11,25 +11,43 @@ it is in TypeScript.
 
 ## Files
 
-- [`env.py`](env.py) — `ChatcatGymEnv`, a `gymnasium.Env` subclass that
-  spawns the TS bridge as a subprocess and translates the gym contract
-  into NDJSON over stdio. Action space is `Discrete(24)` (6 types × 4
-  intensity bins); rationale documented in the module docstring.
-- [`drift_guard.py`](drift_guard.py) — verifies that a fixed action
-  sequence produces a bit-identical trajectory through the gym wrapper
-  vs directly through the bridge subprocess. Companion to the fase 0
-  bridge-determinism check; together they cover bridge + wrapper.
+**Training path (fase 1b+):**
+- [`env_continuous.py`](env_continuous.py) — `ChatcatGymContinuousEnv`,
+  the env used for fase 2 training. Action space is
+  `Box(low=0, high=1, shape=(7,), dtype=float32)` — 6 type-score dims
+  (argmax decodes to action type) + 1 intensity dim (clipped to [0,1]).
+  Standard "categorical via continuous logits" pattern for envs that
+  demand a Box space. Rationale documented in the module docstring.
+- [`drift_guard_continuous.py`](drift_guard_continuous.py) — verifies
+  that the continuous wrapper's Box(7,) → (type, intensity) decode is
+  consistent between gym wrapper and direct-bridge paths. Test actions
+  include both bounded and Normal-distributed samples to cover what
+  PPO actually emits.
+- [`ppo_chatcat_continuous.py`](ppo_chatcat_continuous.py) — CleanRL
+  `ppo_continuous_action.py` adapted for `ChatcatGymContinuousEnv`.
+  Algorithm unchanged. Fase 1b smoke (10k timesteps).
+
+**Reference / pensjonert (fase 1):**
+- [`env.py`](env.py) — `ChatcatGymEnv` with `Discrete(24)` (6 types × 4
+  intensity bins). Kept for reference; intensity-axis approximation
+  superseded by the continuous form above.
+- [`drift_guard.py`](drift_guard.py) — drift guard for the Discrete
+  wrapper.
 - [`ppo_chatcat.py`](ppo_chatcat.py) — CleanRL `ppo.py` adapted for
-  `ChatcatGymEnv`. Algorithm unchanged. Used as the fase 1 smoke test
-  (10k timesteps default — enough for one optimizer update, not enough
-  for any conclusion about learning).
+  the Discrete env.
 
 ## Running
 
-All three scripts use PEP 723 inline metadata; run via `uv`:
+All scripts use PEP 723 inline metadata; run via `uv`:
 
 ```sh
 cd litterbox
+
+# Continuous (training path)
+uv run rl/drift_guard_continuous.py
+uv run rl/ppo_chatcat_continuous.py [--seed 1] [--total-timesteps 10000]
+
+# Discrete (reference)
 uv run rl/drift_guard.py
 uv run rl/ppo_chatcat.py [--seed 1] [--total-timesteps 10000]
 ```
