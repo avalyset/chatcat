@@ -11,7 +11,20 @@ it is in TypeScript.
 
 ## Files
 
-**Training path (fase 1b+):**
+**Phase 2 training (committed, not yet executed):**
+- [`train_phase2.py`](train_phase2.py) — full PPO training in ADR 0007's
+  crossover regime (α=1.0, β=0.5, engagement_scale_mult=5.0). Default
+  5M timesteps (~30–90 min on Apple Silicon). Locked-in reward
+  parameters; not configurable via CLI on purpose — the calibration
+  choice belongs in this file as the single source of truth.
+- [`grid_scan_phase2.py`](grid_scan_phase2.py) — post-training
+  classifier with pre-registered degeneracy thresholds (IDLE_OUT /
+  PUSH_THE_CAT / TRIVIAL / NON_TRIVIAL). Run against a saved agent.pt.
+- [`PHASE2-RUNBOOK.md`](PHASE2-RUNBOOK.md) — exact command sequence
+  for the training week, with the decision tree based on the
+  classifier's verdict.
+
+**Training path scaffolding (fase 1b+):**
 - [`env_continuous.py`](env_continuous.py) — `ChatcatGymContinuousEnv`,
   the env used for fase 2 training. Action space is
   `Box(low=0, high=1, shape=(7,), dtype=float32)` — 6 type-score dims

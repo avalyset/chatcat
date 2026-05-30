@@ -27,7 +27,34 @@ import { createEnv } from '../rl/env';
 import { ACTION_DURATION_MS, ACTION_TYPES } from '../rl/encoders';
 import type { AgentAction, AgentActionType, FelineFive } from '../types';
 
-const env = createEnv();
+// Reward-parameter overrides from the spawning process.
+//
+// If any of CHATCAT_ALPHA / CHATCAT_BETA / CHATCAT_ENG_SCALE_MULT is set,
+// they override the env.ts default rewardParams. Defaults unchanged when
+// all three are unset — so the fase 1/1b smoke-test hashes still
+// reproduce bit-identically.
+//
+// CHATCAT_ENG_SCALE_MULT is a multiplier on the canonical scale
+// 1/(tickRate * 60); ADR 0007's crossover regime sets it to 5.0.
+const envAlpha = process.env.CHATCAT_ALPHA;
+const envBeta = process.env.CHATCAT_BETA;
+const envScaleMult = process.env.CHATCAT_ENG_SCALE_MULT;
+const hasRewardOverride =
+  envAlpha !== undefined || envBeta !== undefined || envScaleMult !== undefined;
+
+const TICK_RATE = 10; // matches DEFAULT_CONFIG in src/rl/env.ts
+
+const env = hasRewardOverride
+  ? createEnv({
+      rewardParams: {
+        alpha: envAlpha !== undefined ? parseFloat(envAlpha) : 1.0,
+        beta: envBeta !== undefined ? parseFloat(envBeta) : 0.5,
+        engagement_scale:
+          (envScaleMult !== undefined ? parseFloat(envScaleMult) : 1.0)
+          / (TICK_RATE * 60),
+      },
+    })
+  : createEnv();
 
 function write(obj: unknown): void {
   process.stdout.write(JSON.stringify(obj) + '\n');

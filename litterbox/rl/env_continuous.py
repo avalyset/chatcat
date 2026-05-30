@@ -29,6 +29,7 @@ Why a 7-dim Box and not e.g. Box(2,) = (type_as_float, intensity)?
 """
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any, Optional, Tuple
@@ -62,9 +63,26 @@ def decode_continuous_action(action: Any) -> Tuple[str, float]:
 class ChatcatGymContinuousEnv(gym.Env):
     metadata = {"render_modes": []}
 
-    def __init__(self, litterbox_dir: Optional[Path] = None) -> None:
+    def __init__(
+        self,
+        litterbox_dir: Optional[Path] = None,
+        reward_alpha: Optional[float] = None,
+        reward_beta: Optional[float] = None,
+        reward_engagement_scale_mult: Optional[float] = None,
+    ) -> None:
+        """
+        reward_alpha / reward_beta / reward_engagement_scale_mult — when set,
+        forwarded to bridge.ts via CHATCAT_ALPHA / CHATCAT_BETA /
+        CHATCAT_ENG_SCALE_MULT env vars, overriding the TS env's default
+        rewardParams. Leave all None to keep the env.ts defaults (the
+        fase 1b smoke regime). Phase 2 training sets these to ADR 0007's
+        crossover values (alpha=1.0, beta=0.5, scale_mult=5.0).
+        """
         super().__init__()
         self.litterbox_dir = litterbox_dir or find_litterbox_dir()
+        self.reward_alpha = reward_alpha
+        self.reward_beta = reward_beta
+        self.reward_engagement_scale_mult = reward_engagement_scale_mult
         self.action_space = spaces.Box(
             low=0.0, high=1.0, shape=(ACTION_DIM,), dtype=np.float32
         )
@@ -76,6 +94,15 @@ class ChatcatGymContinuousEnv(gym.Env):
 
     def _ensure_started(self) -> None:
         if self.proc is None:
+            env_vars = os.environ.copy()
+            if self.reward_alpha is not None:
+                env_vars["CHATCAT_ALPHA"] = str(self.reward_alpha)
+            if self.reward_beta is not None:
+                env_vars["CHATCAT_BETA"] = str(self.reward_beta)
+            if self.reward_engagement_scale_mult is not None:
+                env_vars["CHATCAT_ENG_SCALE_MULT"] = str(
+                    self.reward_engagement_scale_mult
+                )
             self.proc = subprocess.Popen(
                 ["pnpm", "exec", "tsx", "src/cli/bridge.ts"],
                 cwd=str(self.litterbox_dir),
@@ -84,6 +111,7 @@ class ChatcatGymContinuousEnv(gym.Env):
                 stderr=subprocess.PIPE,
                 text=True,
                 bufsize=1,
+                env=env_vars,
             )
 
     def _send(self, msg: dict) -> dict:
