@@ -39,7 +39,11 @@ rigour. We follow their precedent.
 
 **In chatcat:**
 - The ethics monitor is a separate module that the agent cannot bypass or
-  configure. Its thresholds are hard-coded, not tuneable via settings.
+  configure. Its thresholds are hard-coded, not tuneable via settings. Hard
+  action-level invariants (see §4 for the retreat-state restriction) are
+  enforced at the env layer, not in any particular agent's policy code, so
+  "cannot bypass" is a controllable architecture property rather than an
+  aspiration.
 - There are no engagement metrics, no "session length" KPIs, no features
   designed to maximise time-on-screen.
 - The daily session cap (30 minutes per cat per simulated day) exists because
@@ -75,7 +79,13 @@ rigour. We follow their precedent.
   not consenting to the entire session.
 - LEAVING and RETREATING states are treated as withdrawal of consent. The
   agent's action space is immediately constrained (side_glance + soft_purr
-  only, intensity capped at 0.3).
+  only, intensity capped at 0.3). This constraint is enforced in
+  `EthicsMonitor.enforce()` (`litterbox/src/world/ethics-monitor.ts`) — the
+  single gate every action path passes through before the simulator sees
+  the action, so no agent implementation, rule-based or learned, can
+  bypass it. See [ADR 0009](docs/decisions/0009-ethics-enforcement-point.md)
+  for the architecture and the audit that established this enforcement
+  point.
 - The opt-out counter is prominently displayed on the dashboard. High opt-out
   counts across sessions indicate a policy failure, not a cat failure.
 - Abuse detection: the system models "force-feeding" scenarios (where an

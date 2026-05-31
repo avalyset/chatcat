@@ -1,5 +1,17 @@
 # Phase 2 runbook — ADR 0007 resolution path
 
+> **Superseded (2026-05-31).** This runbook was written before the
+> ADR 0007 training run was executed and described one possible resolution
+> path. ADR 0007 was subsequently resolved against different findings than
+> the runbook anticipated (the form-choice question closed negatively;
+> see [ADR 0007's resolution](../../docs/decisions/0007-reward-calibration.md)),
+> and the work continued through ADRs 0008 and 0009 along a path this
+> runbook does not describe. Kept here for the historical record. **Do
+> not follow as instructions.** For the current state of the RL stack,
+> see [`README.md`](README.md).
+
+---
+
 One-shot, autonomous execution. Two commands, one decision, optional
 ADR resolution. No epoch-by-epoch monitoring.
 

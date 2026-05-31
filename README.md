@@ -50,8 +50,14 @@ The Litterbox contains three independent subsystems:
 3. **Ethics Monitor** — A separate module that the agent cannot bypass. It
    tracks CSS trajectory, opt-out events, habituation curves, and
    time-in-stress ratios. It forces agent pauses at CSS >= 5 and locks
-   sessions at CSS >= 6. All events are logged. The dashboard exposes
-   everything the monitor sees.
+   sessions at CSS >= 6. Hard action-level invariants — e.g., the
+   retreat-state restriction (`side_glance` / `soft_purr` only, intensity
+   capped at 0.3 in RETREATING/LEAVING) — are enforced in
+   `EthicsMonitor.enforce()`, the gate every action path passes through
+   before the simulator sees the action. All events are logged; the
+   dashboard exposes everything the monitor sees. See
+   [ADR 0009](docs/decisions/0009-ethics-enforcement-point.md) for the
+   enforcement architecture.
 
 ## Running
 
@@ -81,8 +87,17 @@ feature.
 
 ## Research direction
 
-- [ADR 0002](docs/decisions/0002-self-play-research-track.md) — Self-play RL against SimCat as the v0.2+ research track, with mandatory sim-to-real validation.
-- [ADR 0003](docs/decisions/0003-habituation-calibration.md) — Habituation rates are placeholders; calibration requires real-cat session data (v0.4).
+Architectural and methodological decisions are tracked as ADRs. See
+[docs/decisions/](docs/decisions/README.md) for the full index. The v0.2+
+work items are self-play RL against SimCat
+([ADR 0002](docs/decisions/0002-self-play-research-track.md)) and
+habituation-rate calibration against real-cat data
+([ADR 0003](docs/decisions/0003-habituation-calibration.md)); the
+resolved ADRs document what we found along the way — reward design in
+[0007](docs/decisions/0007-reward-calibration.md) /
+[0008](docs/decisions/0008-reward-baseline-normalization.md), and the
+ethics-enforcement architecture in
+[0009](docs/decisions/0009-ethics-enforcement-point.md).
 
 ## License
 
