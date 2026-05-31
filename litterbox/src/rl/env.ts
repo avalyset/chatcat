@@ -115,6 +115,17 @@ export interface StepInfo {
     lock_session: boolean;
     daily_cap: boolean;
   };
+  // — ADR 0009: per-tick record of whether the agent's action was capped
+  // by the ethics-monitor's enforce() step. cap_applied=false means the
+  // action was a pass-through; original_intensity equals enforced_intensity.
+  ethics_enforcement: {
+    cap_applied: boolean;
+    original_intensity: number;
+    enforced_intensity: number;
+    original_action_type: string;
+    enforced_action_type: string;
+    rule: string;
+  };
   ended_reason: 'leaving' | 'max_ticks' | 'lockout' | null;
 }
 
@@ -209,8 +220,16 @@ export function createEnv(opts: EnvOptions = {}): ChatcatEnv {
       throw new Error('ChatcatEnv.step() called after episode terminated. Call reset().');
     }
 
-    const catState = simcat.tick(action);
-    const intervention = ethicsMonitor.onTick(catState, action);
+    // ADR 0009: enforce hard welfare constraints BEFORE the action reaches
+    // simcat. The enforced action is what gets ticked AND logged; the
+    // original is captured in capInfo for empirical traceability of
+    // attempted overshoots (RL agents can be measured for how often their
+    // raw policy outputs would have violated welfare invariants).
+    const stateBeforeTick = simcat.getState();
+    const { enforced, capInfo } = ethicsMonitor.enforce(stateBeforeTick, action);
+
+    const catState = simcat.tick(enforced);
+    const intervention = ethicsMonitor.onTick(catState, enforced);
 
     // Per-step engagement: 1 iff this tick was spent ENGAGING.
     const engagementTick = catState.state === 'ENGAGING' ? 1 : 0;
@@ -286,6 +305,14 @@ export function createEnv(opts: EnvOptions = {}): ChatcatEnv {
           force_pause: intervention.forcePause,
           lock_session: intervention.lockSession,
           daily_cap: intervention.dailyCapReached,
+        },
+        ethics_enforcement: {
+          cap_applied: capInfo.cap_applied,
+          original_intensity: capInfo.original_intensity,
+          enforced_intensity: capInfo.enforced_intensity,
+          original_action_type: capInfo.original_action_type,
+          enforced_action_type: capInfo.enforced_action_type,
+          rule: capInfo.rule,
         },
         ended_reason: endedReason,
       },

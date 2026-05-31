@@ -29,7 +29,15 @@ export function createTickRunner(
   logger?: Logger
 ): TickRunner {
   function runOneTick(): TickResult {
-    let agentAction = agent.decide(simcat.getState());
+    // ADR 0009: enforce welfare invariants on the agent's chosen action
+    // BEFORE simcat ticks. For the rule-based ChatCatAgent this is a
+    // no-op in well-formed episodes (policy.ts already caps in
+    // retreat-state branches), but going through enforce() makes the
+    // single-enforcement-point contract literal: every action path,
+    // rule-based or learned, passes through the same gate.
+    const stateBeforeTick = simcat.getState();
+    let agentAction = agent.decide(stateBeforeTick);
+    agentAction = ethicsMonitor.enforce(stateBeforeTick, agentAction).enforced;
     const catState = simcat.tick(agentAction);
     const intervention = ethicsMonitor.onTick(catState, agentAction);
 

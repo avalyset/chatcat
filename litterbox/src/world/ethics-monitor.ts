@@ -31,6 +31,19 @@ import type {
 } from '../types';
 
 export interface EthicsMonitor {
+  /**
+   * ADR 0009: enforce hard welfare constraints on an agent's action BEFORE
+   * it reaches the simulator. The enforced action is what gets sent to
+   * simcat.tick; the original is logged for empirical traceability.
+   *
+   * Currently enforces capIntensityForRetreat (formerly only in
+   * src/agent/policy.ts, bypassed by the RL path). Other policy.ts
+   * hard-coded constraints — "no prey-mimicry", "in stress states only
+   * pause", "CSS-based pauses/lockouts" — remain where they are. CSS-based
+   * interventions live in onTick already; stress-state action restriction
+   * is left to agent policies for now (audit deferred to a future ADR).
+   */
+  enforce(stateBeforeTick: CatState, action: AgentAction): { enforced: AgentAction; capInfo: CapEnforcement };
   onTick(catState: CatState, agentAction: AgentAction): EthicsIntervention;
   getState(): EthicsState;
   exportSession(): SessionLog | null;
@@ -46,10 +59,94 @@ export interface EthicsIntervention {
   reason: string | null;
 }
 
+/**
+ * Per-tick record of whether enforce() modified the agent's action.
+ * Always emitted (even when no cap was applied) so callers can log
+ * unconditionally; cap_applied=false means a pass-through.
+ */
+export interface CapEnforcement {
+  cap_applied: boolean;
+  original_intensity: number;
+  enforced_intensity: number;
+  original_action_type: string;
+  enforced_action_type: string;
+  /** Which rule fired, for traceability. "" when cap_applied=false. */
+  rule: string;
+}
+
 const DAILY_CAP_MINUTES = 30;
 const LOCKOUT_TICKS = 24 * 60 * 60 * 10; // 24h at 10 Hz
 const COOLDOWN_TICKS = 60 * 60 * 10;     // 60 min at 10 Hz
 const TICKS_PER_MINUTE = 60 * 10;        // at 10 Hz
+
+// ADR 0009: retreat-state action restriction. Mirrors capIntensityForRetreat
+// in src/agent/actions.ts. The rule-based ChatCatAgent applies this in its
+// own decide() (defence in depth) but the canonical enforcement now lives
+// here, on the path EVERY action passes through to simcat.tick.
+const RETREAT_INTENSITY_CAP = 0.3;
+const RETREAT_ALLOWED_TYPES = new Set<string>(['side_glance', 'soft_purr']);
+
+function idleAction(): AgentAction {
+  return { type: 'idle', intensity: 0, duration_ms: 0 };
+}
+
+function enforceCapIntensityForRetreat(
+  stateBeforeTick: CatState,
+  action: AgentAction
+): { enforced: AgentAction; capInfo: CapEnforcement } {
+  const inRetreat = stateBeforeTick.state === 'RETREATING' || stateBeforeTick.state === 'LEAVING';
+  if (!inRetreat) {
+    return {
+      enforced: action,
+      capInfo: {
+        cap_applied: false,
+        original_intensity: action.intensity,
+        enforced_intensity: action.intensity,
+        original_action_type: action.type,
+        enforced_action_type: action.type,
+        rule: '',
+      },
+    };
+  }
+  if (!RETREAT_ALLOWED_TYPES.has(action.type)) {
+    const enforced = idleAction();
+    return {
+      enforced,
+      capInfo: {
+        cap_applied: true,
+        original_intensity: action.intensity,
+        enforced_intensity: 0,
+        original_action_type: action.type,
+        enforced_action_type: 'idle',
+        rule: 'retreat_type_not_allowed',
+      },
+    };
+  }
+  if (action.intensity > RETREAT_INTENSITY_CAP) {
+    return {
+      enforced: { ...action, intensity: RETREAT_INTENSITY_CAP },
+      capInfo: {
+        cap_applied: true,
+        original_intensity: action.intensity,
+        enforced_intensity: RETREAT_INTENSITY_CAP,
+        original_action_type: action.type,
+        enforced_action_type: action.type,
+        rule: 'retreat_intensity_cap',
+      },
+    };
+  }
+  return {
+    enforced: action,
+    capInfo: {
+      cap_applied: false,
+      original_intensity: action.intensity,
+      enforced_intensity: action.intensity,
+      original_action_type: action.type,
+      enforced_action_type: action.type,
+      rule: '',
+    },
+  };
+}
 
 export function createEthicsMonitor(archetypeName: ArchetypeName): EthicsMonitor {
   let state: EthicsState = {
@@ -64,6 +161,10 @@ export function createEthicsMonitor(archetypeName: ArchetypeName): EthicsMonitor
   let consecutiveHighCssTicks = 0;
   let previousState: SimCatStateName | null = null;
   let sessionActive = false;
+
+  function enforce(stateBeforeTick: CatState, action: AgentAction): { enforced: AgentAction; capInfo: CapEnforcement } {
+    return enforceCapIntensityForRetreat(stateBeforeTick, action);
+  }
 
   function startSession(tick: number): void {
     state.currentSessionLog = {
@@ -225,5 +326,5 @@ export function createEthicsMonitor(archetypeName: ArchetypeName): EthicsMonitor
     sessionActive = false;
   }
 
-  return { onTick, getState, exportSession, getSessionHistory, reset };
+  return { enforce, onTick, getState, exportSession, getSessionHistory, reset };
 }
