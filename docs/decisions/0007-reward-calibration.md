@@ -2,16 +2,23 @@
 
 ## Status
 
-**Proposed (open problem, resolution deferred to first trained agent).**
+**Resolved (2026-05-30, evening).** The pre-registered crossover regime
+was trained and evaluated. The pre-registered degeneracy classifier was
+applied against locked thresholds (PUSH-criterion fix anchored to the
+random baseline pushed earlier in the day, `9b9063e`). The form-choice
+question 0007 explicitly deferred to a trained agent is closed
+negatively: under the only regime where neither component is
+pre-deleted from the gradient, no form provides a learnable gradient
+above the random-policy floor. A reward-redesign ADR (0008) follows;
+this resolution does not pre-empt its design.
 
-This ADR documents an elimination test: ADR 0002's default reward
-parameters are structurally degenerate and cannot be used as-is. It does
-not yet name the correct parameters. Resolution is deferred to a trained
-PPO agent's behaviour, because correlation under random exploration
-cannot adjudicate the question — see *Methodology caveat* below.
 Precedent for an ADR that locks framing before its resolution evidence
 exists: [ADR 0005](0005-baseline-interpretation.md) and
-[ADR 0006](0006-continuous-sampling.md).
+[ADR 0006](0006-continuous-sampling.md). Both the degeneracy
+classifier (`litterbox/rl/grid_scan_phase2.py`) and its thresholds
+were locked before any trained-agent data existed; the resolution
+honours that pre-registration — no threshold was edited after seeing
+a result.
 
 ## Context
 
@@ -218,12 +225,200 @@ sole positive signal.
 - Habituation-rate calibration. ADR 0003 owns that question; this ADR
   fixes hab = 0.010 to isolate the reward question.
 
+## Resolution (2026-05-30, evening)
+
+### What was run
+
+Three PPO runs were attempted under the pre-registered crossover
+regime (form `adr0002_max_css`, α=1.0, β=0.5, engagement_scale_mult=5.0),
+N=5M timesteps each (~32 min wall on Apple Silicon), evaluated by
+`grid_scan_phase2.py` with N=100 episodes at master_seed=1.
+
+**Run 1 — crossover, free variance (CleanRL default).**
+- Command: `uv run rl/train_phase2.py --seed 1`
+- Output dir: `/tmp/chatcat-rl-runs/phase2__seed1__1780166999/`
+- `state_dict_sha256`: `88a1f70f3e87443a84aa871ced1f970e7e751ad92c4aade0026df9e640b0e602`
+- Code commit: `9583df2` (phase 2 scaffold) + classifier fix `9b9063e`.
+- Verdict: **NON_TRIVIAL** under the locked classifier — non-idle 0.92,
+  entropy 1.95 bits, state-conditional TVD 0.34.
+
+**Run 2 — entropy-coefficient ablation, aborted before launch.**
+- Hypothesis: ent_coef was too high, suppressing determinism.
+- Verification before launch: `train_phase2.py` line 98 sets
+  `--ent-coef` default to 0.0; Run 1's `run_config.json` confirmed
+  `ent_coef: 0.0`. The entropy term was already not in the loss.
+- Run not executed. Per the same pre-registration discipline this ADR
+  was built under, an elimination test whose premise is falsified
+  before launch must be flagged, not run blindly. The observation
+  rerouted to run 3.
+
+**Run 3 — crossover, frozen `actor_logstd = -1.0` (per-dim σ ≈ 0.37).**
+- Command: `uv run rl/train_phase2.py --seed 1 --frozen-logstd -1.0 --exp-name phase2_frozen_logstd_m1`
+- Output dir: `/tmp/chatcat-rl-runs/phase2_frozen_logstd_m1__seed1__1780170832/`
+- `state_dict_sha256`: `c48d9636eaa31c05cc47a434ba626a21e28b699769a4a4452b4c53548dfad98b`
+- Code commit: this resolution's commit (`--frozen-logstd` flag and
+  state_dict-buffer plumbing in `train_phase2.py` and
+  `grid_scan_phase2.py`).
+- Frozen-logstd choice anchored at −1.0 (not −2.0 which was an
+  off-the-cuff first suggestion): for a 6-way argmax over type-logits,
+  σ ≈ 0.37 retains meaningful exploration (~25% argmax-flip probability
+  for mean-gap 0.5) while making the learned mean dominate sampling
+  noise. Verified post-run: all 10 SimCat states visited > 50 times,
+  5/6 action types ≥ 5% share, value_loss decreasing — exploration
+  guard green, result binding.
+- Verdict: **NON_TRIVIAL** under the locked classifier — non-idle 0.95,
+  entropy 1.91 bits, state-conditional TVD 0.56.
+
+### Results — direct three-way table
+
+Random baseline (`--random-baseline` mode, no model), Run 1 (free
+variance, free actor_logstd), Run 3 (free actor_mean, frozen
+actor_logstd = −1.0). All scored under the crossover reward, all
+seeded master_seed=1, all 100 evaluation episodes.
+
+| Metric                    | Random  | Run 1   | Run 3   |
+|---                        |---:     |---:     |---:     |
+| idle_share                | 0.1668  | 0.0752  | 0.0534  |
+| non_idle_share            | 0.8332  | 0.9248  | 0.9466  |
+| action_type_entropy (bits)| 2.5850  | 1.9466  | 1.9060  |
+| mean_engagement_intensity | 0.5000  | 0.1695  | 0.0944  |
+| **mean_state_TVD**        | 0.0040  | **0.3376** | **0.5587** |
+| mean_opt_outs_per_episode | 24.02   | 24.25   | 24.04   |
+| high_css_share_overall    | 0.0232  | 0.0241  | 0.0231  |
+| classification            | TRIVIAL | NON_TRIVIAL | NON_TRIVIAL |
+| reward `adr0002_max_css`  | −10.314 | −10.205 | −10.339 |
+| reward `mean_css`         | −6.262  | −6.139  | −6.321  |
+| reward `high_css_share`   | −4.541  | −4.409  | −4.601  |
+
+Reward `std` across all three runs and all three forms is 2.84–2.97;
+all observed mean differences from random are within ±0.13 — i.e.,
+within 5% of one standard deviation. The reward signal cannot
+distinguish a state-conditional, deterministic agent from random
+exploration at this sample size.
+
+**Action-type marginals (run 1 vs run 3):** Run 1 ended on
+`side_glance 47%, trill 28%, soft_purr 0.6%`; Run 3 ended on
+`side_glance 55%, soft_purr 18%, slow_blink 12%, trill 1.6%`.
+Different policies — same welfare, same reward.
+
+### Resolution of ADR 0007's explicit question
+
+ADR 0007 asked: under a policy that actually decorrelates the three
+CSS aggregates, do the three reward forms differ in ways the random
+baseline could not expose?
+
+**No.** Two trained agents with strong state-conditioning (TVD ~7× and
+~14× higher than the random-baseline noise floor of 0.0040,
+respectively) and visibly different action-type marginals produce
+**reward distributions indistinguishable from random** under all three
+forms. The pairwise correlation pattern between forms documented in the
+ADR 0007 random-baseline grid scan (r > 0.99 between forms) is
+preserved under both trained policies — the forms continue to rank
+trajectories together rather than apart.
+
+The deferred form-choice decision is therefore closed negatively: at
+this scale of training, in this regime, no form provides a learnable
+gradient above random. `adr0002_max_css` remains the v0.2 nominal form
+purely for fidelity to ADR 0002's wording.
+
+### The deeper finding (not predicted by ADR 0007)
+
+ADR 0007 named two failure modes (idle-out, push-the-cat). It did not
+name a third: that a trained agent's behaviour can be measurably
+state-conditional yet reward-invariant. That is what we observed —
+twice, with two different variance disciplines, two different action
+mixes.
+
+The reward in the crossover regime is **flat enough that no
+state-conditional deterministic policy at this PPO budget produces a
+reward signal distinguishable from random**. Three alternative
+explanations are ruled out by the runs:
+
+1. **Entropy-bonus suppression of determinism** — falsified before
+   Run 2 by inspection of `train_phase2.py` and Run 1's
+   `run_config.json`: `ent_coef = 0.0` throughout. No entropy bonus
+   exists in the loss to suppress determinism.
+2. **Variance drift makes any deterministic structure invisible to
+   the reward** — falsified by Run 3: with `actor_logstd` frozen at
+   −1.0 (σ ≈ 0.37, ~11× tighter than Run 1's drifted endpoint),
+   the agent learned an *even more* state-conditional policy
+   (TVD 0.56 vs 0.34) and still landed at random-equivalent reward
+   (within Δ < 0.2 on every form).
+3. **Exploration failure** — falsified by the exploration guard
+   pre-registered into Run 3: all 10 SimCat states received
+   > 50 visits, 5/6 action types received ≥ 5% share, `value_loss`
+   decreased monotonically (0.0159 → 0.0069). The critic was learning;
+   the environment was being covered; the agent was not stuck.
+
+With those three alternatives excluded, the residual conclusion is
+that the reward formulation `engagement_minutes − α·max_CSS − β·opt_outs`
+in the crossover (α=1.0, β=0.5, scale_mult=5.0) regime is *informationally
+too coarse* to differentiate a sensible state-conditional policy from
+random sampling at the 5M-timestep PPO scale. The gradient PPO computes
+from this reward leads to behaviour change (the trained agents are
+clearly not random) without leading to reward improvement — a
+characteristic signature of a near-flat reward landscape.
+
+The classic "climb-then-slide" pattern was reproduced under both
+runs: Run 1 climbed to ep-return-mean = −10.03 at update ~1000 then
+slid back to −10.98; Run 3 climbed to −9.99 at update ~1082 and slid
+to −10.60. Neither held its gain. This is consistent with a reward
+surface where local improvements exist (the climb) but the global
+gradient is too noisy to maintain them (the slide).
+
+### Methodology caveat
+
+This finding is reward-flatness **in the crossover regime
+(α=1.0, β=0.5, scale_mult=5.0), in this SimCat env, with the
+Box(7,) action encoding (6 type-logits + intensity, argmax + clip),
+at the 5M-timestep PPO scale on CPU with CleanRL's
+ppo_continuous_action defaults**. It is **not** a claim that no reward
+can drive learning against SimCat. It is the specific empirical
+observation that this formulation, calibrated to this regime, does not.
+
+A genuinely informative reward might decompose differently
+(e.g., normalised components against trained-policy baselines, dense
+intermediate rewards for state-conditional behaviours that ADR 0002's
+formula treats as zero-information). That decomposition is the subject
+of the follow-on ADR.
+
+### What follows
+
+A reward-redesign ADR (**0008**) is the natural next work. It is *not*
+part of 0007's resolution and is intentionally not pre-empted here.
+0008 will frame the question — what reward could give PPO learnable
+gradient signal against SimCat? — and propose a candidate, with the
+same pre-registration discipline (methodology locked before any new
+training run). It may also consider whether a stronger algorithmic
+prior (e.g., behaviour cloning from the rule-based ChatCatAgent as a
+warm start) belongs in the v0.2 architecture alongside reward redesign.
+
+### Decisions following from this resolution
+
+- ADR 0002's compute-budget commitment (`$10–50`, 1M-step order) is
+  **respected** — we spent two 5M-timestep runs and a baseline,
+  well inside budget.
+- ADR 0002's third safeguard (CONTINUOUS PERSONALITY SAMPLING) is
+  unaffected; trait sampling worked as specified throughout.
+- ADR 0007's preliminary position (start at crossover, adr0002_max_css)
+  was the right starting point — it allowed the elimination test to be
+  run cleanly. The preliminary position is now *retired* (not adopted),
+  because the trained-agent data showed the regime cannot learn.
+- No ethics-monitor thresholds, action-space definition, or shipped
+  behaviour change as a consequence of this resolution. The agent's
+  welfare profile (opt-outs, CSS occupancy) was essentially identical
+  to random in both runs — the reward did not teach the agent to harm
+  the cat. The classification flagged this correctly as NON_TRIVIAL
+  rather than PUSH_THE_CAT because the welfare-outcome guard fires
+  on degradation, not on activity.
+
 ## References
 
 - [ADR 0002](0002-self-play-research-track.md) — Self-play research
   track for emergent cat-communication strategies. Specifies the reward
   formula this ADR calibrates. Names the reward-hacking failure mode
-  the two degenerate regimes here instantiate.
+  the two degenerate regimes here instantiate. The third failure mode
+  (state-conditional but reward-invariant) was unanticipated.
 - [ADR 0005](0005-baseline-interpretation.md) — Baseline interpretation
   and two-pair clustering hypothesis. Precedent for a hypothesis
   deferred from one ADR to a later verification.
@@ -231,14 +426,44 @@ sole positive signal.
   sampling, methodology pre-commitment. Precedent for locking framing
   before the evidence that resolves it exists. This ADR uses the same
   continuous-sampling regime (uniform [0,1]^5, habituation fixed at
-  0.010) for the random baseline.
+  0.010) for both the random baseline and the trained agents.
 
 ## Reproducibility
+
+### Random-baseline grid scan (origin of the three-form correlation table)
 
 - Commits on `main`:
   - `96436d8` — env scaffold (`litterbox/src/rl/env.ts`, `reward.ts`, `encoders.ts`, harness `litterbox/src/cli/rl-random.ts`).
   - `9b646ec` — three episode-level reward forms + correlation report.
   - `9b4775f` — `--grid` mode for the 3 × 3 × 3 × 3 scan.
 - Run: `pnpm rl:random --episodes 100 --master-seed 1 --grid`.
-- Numerically identical across re-runs at the same master_seed (only
-  wall-time differs).
+- Numerically identical across re-runs at the same master_seed.
+
+### Phase 2 training stack
+
+- Commits on `main`:
+  - `437d056` — stdio bridge prototype + latency probe + determinism check.
+  - `99a101e` — CleanRL PPO Discrete smoke (phase 1 reference, retired).
+  - `bdf21be` — continuous Box(7,) env + ppo_continuous_action smoke.
+  - `9583df2` — phase 2 training scaffold + grid scan + runbook (ADR 0007 crossover).
+  - `9b9063e` — PUSH_THE_CAT criterion fix (welfare outcome, not action intensity), with random-baseline empirical anchor.
+- This-commit additions: `--frozen-logstd` flag in `train_phase2.py`
+  with `actor_logstd` as `register_buffer` when frozen; matching
+  inference path in `grid_scan_phase2.py` that reads `frozen_logstd`
+  from `run_config.json` (backward-compatible — runs without the field
+  fall back to the CleanRL Parameter default).
+
+### Run-1 + Run-3 reproduction
+
+- Run 1: `uv run rl/train_phase2.py --seed 1` → `agent.pt` with
+  `state_dict_sha256 = 88a1f70…0b0e602`. Then
+  `uv run rl/grid_scan_phase2.py --model-path <agent.pt> --episodes 100 --seed 1`
+  reproduces every classification metric in the table above to FP precision.
+- Run 3: `uv run rl/train_phase2.py --seed 1 --frozen-logstd -1.0
+  --exp-name phase2_frozen_logstd_m1` →
+  `state_dict_sha256 = c48d963…548dfad98b`. Same grid-scan command
+  reproduces Run 3's row.
+- Re-running Run 1's grid scan after the classifier-fix commit
+  (`9b9063e`) and the `--frozen-logstd` plumbing both produce
+  bit-identical metrics to those captured at the time of the run —
+  verified before this resolution was drafted.

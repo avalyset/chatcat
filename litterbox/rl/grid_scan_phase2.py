@@ -144,7 +144,19 @@ def parse_args():
 
 
 def load_agent(model_path: Path, env) -> Agent:
-    agent = Agent(env)
+    # Infer actor_logstd discipline from the run's run_config.json so the
+    # eval Agent matches the one that produced agent.pt (Parameter vs
+    # frozen-buffer). Falls back to None (Parameter) for legacy runs that
+    # predate the --frozen-logstd flag.
+    frozen_logstd = None
+    config_path = model_path.parent / "run_config.json"
+    if config_path.exists():
+        try:
+            cfg = json.loads(config_path.read_text())
+            frozen_logstd = cfg.get("frozen_logstd")
+        except Exception:
+            pass
+    agent = Agent(env, frozen_logstd=frozen_logstd)
     state_dict = torch.load(model_path, map_location="cpu", weights_only=True)
     agent.load_state_dict(state_dict)
     agent.eval()

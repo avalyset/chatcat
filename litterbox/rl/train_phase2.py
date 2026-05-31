@@ -99,6 +99,13 @@ def parse_args():
     p.add_argument("--vf-coef", type=float, default=0.5)
     p.add_argument("--max-grad-norm", type=float, default=0.5)
     p.add_argument("--output-dir", type=str, default="/tmp/chatcat-rl-runs")
+    p.add_argument("--frozen-logstd", type=float, default=None,
+                   help="If set, actor_logstd is registered as a fixed buffer at this value "
+                        "(per-dim) instead of a learnable Parameter. Used for ablation tests "
+                        "where the policy variance must not drift. When unset (default), "
+                        "actor_logstd is a learnable Parameter initialised to 0.0 — the "
+                        "CleanRL ppo_continuous_action.py convention, and the baseline regime "
+                        "that produced run 1's agent.pt.")
     args = p.parse_args()
     args.batch_size = args.num_envs * args.num_steps
     args.minibatch_size = args.batch_size // args.num_minibatches
@@ -124,7 +131,16 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
 
 
 class Agent(nn.Module):
-    def __init__(self, envs):
+    def __init__(self, envs, frozen_logstd: float | None = None):
+        """
+        frozen_logstd:
+          None  → actor_logstd is a learnable Parameter initialised to 0.0
+                  (CleanRL ppo_continuous_action.py default; run 1 regime).
+          float → actor_logstd is a non-learnable buffer filled with the
+                  given value across all action dims. Used for ablation
+                  tests where policy variance must not drift during
+                  training. Saved in state_dict; restored on load.
+        """
         super().__init__()
         obs_dim = int(np.array(envs.single_observation_space.shape).prod())
         action_dim = int(np.prod(envs.single_action_space.shape))
@@ -142,7 +158,14 @@ class Agent(nn.Module):
             nn.Tanh(),
             layer_init(nn.Linear(64, action_dim), std=0.01),
         )
-        self.actor_logstd = nn.Parameter(torch.zeros(1, action_dim))
+        self.logstd_is_frozen = frozen_logstd is not None
+        if frozen_logstd is None:
+            self.actor_logstd = nn.Parameter(torch.zeros(1, action_dim))
+        else:
+            self.register_buffer(
+                "actor_logstd",
+                torch.full((1, action_dim), float(frozen_logstd), dtype=torch.float32),
+            )
 
     def get_value(self, x):
         return self.critic(x)
@@ -203,8 +226,11 @@ def main():
     )
     assert isinstance(envs.single_action_space, gym.spaces.Box)
 
-    agent = Agent(envs).to(device)
+    agent = Agent(envs, frozen_logstd=args.frozen_logstd).to(device)
     optimizer = optim.Adam(agent.parameters(), lr=args.learning_rate, eps=1e-5)
+    if agent.logstd_is_frozen:
+        print(f"actor_logstd FROZEN at {args.frozen_logstd} (per-dim std ≈ "
+              f"{float(np.exp(args.frozen_logstd)):.4f})")
 
     obs_shape = envs.single_observation_space.shape
     act_shape = envs.single_action_space.shape
