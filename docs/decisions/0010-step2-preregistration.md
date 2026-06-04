@@ -415,23 +415,64 @@ planned main run:
 
 ### Locked seeds (pre-registered before kjøring)
 
-Both the main-run seed set and the anchoring-seed value are committed
-to this document before the anchoring seed is run, so disjointness
-is a pre-registration property of the design rather than something
-chosen after seeing the run identifier.
+The main-run seed set is committed to this document before the main run
+is started, so disjointness vs. forankrings-seeden and vs. the
+0008-historikkens used seeds is a pre-registration property of the
+design rather than something chosen after seeing run identifiers or
+results.
 
-- **Main run (Step 2):** N=5 seeds = `{1, 2, 3, 4, 5}`. Seed 1 is the
-  value all three of ADR 0008's training runs used
-  (`train_phase2_baseline.py --seed 1` in each); seeds 2–5 extend
-  that set to five. The choice of `{1..5}` rather than e.g. `{1..10}`
-  reflects Step 2's sample-size budget (locked elsewhere in this
-  document at five seeds).
-- **Anchoring seed (Step 1.5):** seed value = `12345`. Chosen as a
-  value clearly outside `{1..5}` so accidental reuse is impossible.
-- **Disjointness:** `{1, 2, 3, 4, 5} ∩ {12345} = ∅`. The anchoring
-  seed is therefore not one of the N=5 main-run seeds, and the
-  ENV-internal `np_random` lineage at `--seed 12345` shares no episode
-  state with any main-run seed's lineage.
+**Amended (2026-06-04, before any main-run kjøring):** the main-run
+seed set was originally locked at `{1, 2, 3, 4, 5}` with seed 1
+explicitly chosen as the value all three ADR 0008 training runs used.
+After Step 1.5 was complete but before main-run kjøring began, three
+observations made that choice untenable:
+
+1. ADR 0008's Run 2 was executed at `--seed 1` against the
+   post-0009-fix env at LR=3e-4 — the exact configuration the main run
+   would use. Run 2's `state_dict_sha256`, `ep_init @ update 100`,
+   `ep_peak`, and `ep_final @ update 2441` are documented in
+   ADR 0008's resolution. Seed 1 in the main run is therefore not
+   outcome-blind: its result is partially knowable from a prior
+   committed artefact.
+2. Run 2's `metrics.jsonl` itself was lost when `/tmp` was wiped
+   between 2026-05-31 and 2026-06-03. Disambiguation between "main-run
+   seed 1 is a fresh independent observation" and "main-run seed 1
+   reproduces Run 2 with possibly RNG-shifted late SHA" cannot be done
+   against the full Run 2 series; only against the four documented
+   fingerprint points in ADR 0008.
+3. Even if disambiguation against the documented fingerprint succeeded
+   ("genuinely different trajectory"), claiming seed 1 as a fresh
+   replication while knowing the original Run 2 outcome is methodically
+   awkward — it requires a footnote rather than being self-evidently
+   clean.
+
+Conservative resolution: swap the main-run seed set proactively to one
+disjoint from both `{12345}` (forankrings-seeden) AND `{1}`
+(0008-historikkens used seed value across all three runs). All N=5
+seeds become outcome-blind by construction, no per-seed disclaimer is
+required, and the "five genuinely new observations" claim the pre-reg
+makes is uncomplicated.
+
+This amendment is committed BEFORE the main run is started, so
+pre-registration-temporal-discipline holds (locked-before-data). The
+prior `{1..5}` set is preserved in git history (commit `0140536`); the
+amendment supersedes it from this commit forward.
+
+- **Main run (Step 2, amended):** N=5 seeds = `{6, 7, 8, 9, 10}`.
+  Chosen as the smallest contiguous integer set above `5` that
+  remains disjoint from `{1}` (0008-historikkens single used value)
+  and `{12345}` (forankrings-seeden). The choice of `{6..10}` rather
+  than e.g. `{100..104}` is irrelevant to determinism (every seed
+  value is equally a fresh trajectory under the script's RNG seeding),
+  but `{6..10}` keeps the integer-set notation compact and
+  human-readable.
+- **Anchoring seed (Step 1.5):** seed value = `12345` (unchanged).
+- **0008-historikk:** seed value = `{1}` (the only seed value used
+  across ADR 0008's three runs; preserved here as a pre-registered
+  exclusion set, not as data).
+- **Disjointness:** `{6, 7, 8, 9, 10} ∩ {12345} = ∅` AND
+  `{6, 7, 8, 9, 10} ∩ {1} = ∅`. All five main-run seeds are
+  outcome-blind by construction.
 
 ### Persistent-path verification (pre-registered decision)
 
