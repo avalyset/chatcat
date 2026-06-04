@@ -27,6 +27,7 @@ saved agent.pt.
 import argparse
 import hashlib
 import json
+import os
 import random
 import signal
 import sys
@@ -91,7 +92,9 @@ def make_env(seed):
 def main():
     args = parse_args()
     run_name = f"{args.exp_name}__seed{args.seed}__{int(time.time())}"
-    output_dir = Path(args.output_dir) / run_name
+    # Expand ~ so persistent-path runs (--output-dir ~/chatcat-rl-runs) work
+    # without shell expansion (argparse stores the literal string).
+    output_dir = Path(os.path.expanduser(args.output_dir)) / run_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
     config = {
@@ -146,6 +149,14 @@ def main():
     nan_detected = False
     last_loss = float("nan")
     interrupted = False
+
+    # Checkpoint-on-best — tracks the highest ep_return_mean_recent seen
+    # with a full buffer (N>=100), saves agent state_dict as best_so_far.pt.
+    # Pure I/O side-effect; does not touch any RNG-consuming code path,
+    # so determinism vs. unaugmented train_phase2_baseline.py is preserved.
+    best_ep_mean: float | None = None
+    best_update: int | None = None
+    best_path = output_dir / "best_so_far.pt"
 
     def handle_interrupt(_s, _f):
         nonlocal interrupted
@@ -260,17 +271,42 @@ def main():
         elapsed = time.time() - start_time
         sps = int(global_step / max(1e-6, elapsed))
         ep_mean = float(np.mean(recent_returns)) if recent_returns else float("nan")
+        # actor_logstd is the direct policy parameter governing exploration
+        # variance per action dim. Logging it per-update (not via the entropy
+        # proxy) is required by ADR 0010's Precision 2 / Step 1.5 — this is
+        # the first run where it lands on disk.
+        actor_logstd_tensor = agent.actor_logstd.detach().cpu().numpy().flatten()
+        actor_logstd_per_dim = [float(x) for x in actor_logstd_tensor]
+        actor_logstd_mean = float(actor_logstd_tensor.mean())
         metrics_file.write(json.dumps({
             "update": update, "global_step": global_step, "elapsed_s": elapsed,
             "sps": sps, "loss": last_loss,
             "policy_loss": float(pg_loss.item()),
             "value_loss": float(v_loss.item()),
             "entropy": float(entropy_loss.item()),
+            "actor_logstd_mean": actor_logstd_mean,
+            "actor_logstd_per_dim": actor_logstd_per_dim,
             "lr": float(optimizer.param_groups[0]["lr"]),
             "ep_return_mean_recent": ep_mean,
             "ep_return_n_recent": len(recent_returns),
         }) + "\n")
         metrics_file.flush()
+
+        # Checkpoint-on-best: save when the rolling-100 mean improves over
+        # all prior such observations. Requires N>=100 so early-training
+        # noise on partial buffers doesn't dominate.
+        if len(recent_returns) >= 100 and (best_ep_mean is None or ep_mean > best_ep_mean):
+            best_ep_mean = ep_mean
+            best_update = update
+            torch.save(
+                {
+                    "state_dict": agent.state_dict(),
+                    "update": update,
+                    "global_step": global_step,
+                    "ep_return_mean_recent": ep_mean,
+                },
+                str(best_path),
+            )
         if update % 10 == 0 or update == 1 or update == num_updates:
             print(f"update={update}/{num_updates}  step={global_step}  "
                   f"sps={sps}  loss={last_loss:.4f}  "
@@ -300,6 +336,11 @@ def main():
               f"max={max(recent_returns):.2f} mean={np.mean(recent_returns):.2f}")
     print(f"final_loss:            {last_loss:.4f}")
     print(f"model_saved:           {model_path}")
+    if best_ep_mean is not None:
+        print(f"best_checkpoint:       {best_path} "
+              f"(update={best_update}, ep_return_mean_recent={best_ep_mean:.2f})")
+    else:
+        print("best_checkpoint:       (none — buffer never reached N=100)")
     print(f"metrics:               {output_dir / 'metrics.jsonl'}")
     print(f"state_dict_sha256:     {sd_sha}")
     print()
