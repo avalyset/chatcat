@@ -10,3 +10,7 @@ batch-results/
 # Python (rl/ tree)
 __pycache__/
 *.pyc
+
+# ADR 0005 — analyse-baseline.ts is exploratory, not committed.
+# See docs/decisions/0005-baseline-interpretation.md (§Files).
+litterbox/scripts/analyse-baseline.ts
