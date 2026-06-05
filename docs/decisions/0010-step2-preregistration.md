@@ -1,6 +1,6 @@
 # ADR 0010, Step 2 — Pre-registration of the instrumented re-run
 
-> **Status: DRAFT — not committed, awaiting Eirik's review.**
+> **Status: Committed (`0140536`), amended (`6f838e9`), resolved (`1ba60c0`).**
 > Locks the publication-grade criterion BEFORE the new training runs
 > produce data. Per 0006-discipline, editing this file after the runs
 > complete would reopen the post-hoc-rationalisation door — specifically
