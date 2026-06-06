@@ -247,7 +247,7 @@ def fig2_sig_exploration():
                 label='baseline')
     ax1.axvspan(pw_lo, pw_hi, color=COL_CTS_REPRO, alpha=0.12, label='peak window')
     ax1.axvspan(iw_lo, iw_hi, color="#888", alpha=0.10, label='ep_init window')
-    ax1.set_ylabel(r"ep_return")
+    ax1.set_ylabel(r"$\mathrm{ep\_return\_mean\_recent}$ (baseline-normalised)")
     ax1.set_title(f"Fig 2 — SIG-EXPLORATION signature on seed {SEED_SHOWN} (CTS-reproducing in both 0010 and 0011)")
     ax1.legend(loc="lower left", fontsize=8, framealpha=0.9)
 

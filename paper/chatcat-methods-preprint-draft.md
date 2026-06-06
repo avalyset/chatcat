@@ -154,7 +154,7 @@ På de seedene som reproduserer climb-then-slide holder SIG-EXPLORATION-signatur
 
 ![Fig 2 — SIG-EXPLORATION signature on seed 9](figures/fig2_sig_exploration.png)
 
-*Fig 2 — SIG-EXPLORATION signature on seed 9 (CTS-reproducing in both measurement passes). Variance (actor_logstd) does not collapse during peak; critic (value_loss) is converged low. The mechanism (SIG-EXPLORATION) holds: slide is the optimisation side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across both passes.*
+*Fig 2 — SIG-EXPLORATION signature on seed 9 (CTS-reproducing in both measurement passes). Top panel shows the same $\mathrm{ep\_return\_mean\_recent}$ series as Fig 1, zoomed in on the buffer-full eligible region (update ≥ 841); y-axis values are identical where the x-axes overlap (e.g., seed 9 peak = 0.2379 at update 2102 in both figures). Variance (actor_logstd) does not collapse during peak; critic (value_loss) is converged low. The mechanism (SIG-EXPLORATION) holds: slide is the optimisation side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across both passes.*
 
 ### 3.4 Gaten passerte, så feilet
 
