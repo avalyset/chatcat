@@ -128,5 +128,12 @@ any release.
 - Ellis, S. L. H. et al. (2008). The influence of body region, handler
   familiarity and order of region handled on the domestic cat's response to
   being stroked. Applied Animal Behaviour Science.
-- Blast Theory, Mancini, C., Mills, D. S., University of Nottingham (2024).
-  Cat Royale. CHI 2024 Best Paper.
+- Schneiders, E., Benford, S., Mancini, C., Mills, D. S., et al. (2024).
+  Designing Multispecies Worlds for Robots, Cats, and Humans. CHI 2024.
+  (Academic primary citation for the Cat Royale project — Blast Theory /
+  Mancini / Mills / University of Nottingham, CHI 2024 Best Paper.)
+- Van Patter, L. E. & Blattner, C. (2020). Advancing Ethical Principles
+  for Non-Invasive, Respectful Research with Nonhuman Animal Participants.
+  Society & Animals, 28(2), 171–190. (Academic origin of the
+  non-maleficence / beneficence / voluntary-participation triad that
+  Cat Royale adopted and this project inherits via that lineage.)

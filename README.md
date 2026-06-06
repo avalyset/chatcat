@@ -14,8 +14,12 @@ Theory, Mancini, Mills, Nottingham; CHI Best Paper 2024, Webby Award 2024) and
 grounded in Clara Mancini's Animal-Computer Interaction framework. The cat is
 the primary user; the human is observer.
 
-Stavros Ntalampiras, who provided the scientific basis for MeowTalk, told the
-New York Times: "It's not pure science at this stage." That is exactly the
+Ntalampiras et al. (2019) showed a proof-of-concept that the emission context
+of a meow can be algorithmically classified across three contexts (waiting for
+food, isolation, brushing). MeowTalk stretched this into translation claims
+beyond that scientific basis — as one of the app's own creators told the New
+York Times, "It's not pure science at this stage." Proof-of-concept
+overstretched to product, admitted by the product itself, is exactly the
 failure mode we are designing against. Every behaviour parameter in this
 simulator traces back to a published, peer-reviewed source.
 

@@ -95,6 +95,17 @@ DOI: [10.5281/zenodo.4008297](https://doi.org/10.5281/zenodo.4008297)
 440 meows from 21 cats in 3 contexts (brushing, isolation, food). Used as
 reference for vocalization intensity distributions.
 
+**Note — three distinct Ntalampiras sources, do not confuse:**
+- This entry (Section 8): the CatMeows *dataset* (Zenodo 4008297, 2020).
+- Section 13: Ntalampiras et al. (2019), the *proof-of-concept classifier
+  paper* (Animals 9(8):543) that established that meow emission context
+  can be algorithmically identified. This is what MeowTalk's scientific
+  basis traces to.
+- Ntalampiras et al. (2020), "What's in a Meow? A Study on Human
+  Classification" (Animals 10(12):2390) — a separate study on *human*
+  classification of meows, not cited in this project. Listed here to
+  prevent accidental conflation.
+
 ## 9. ACI ethics framework
 
 **Mancini, C. & Nannoni, E. (2023).** Ethical Frameworks for Animal-Computer
@@ -106,11 +117,18 @@ as hard-coded system constraints.
 
 ## 10. Cat Royale
 
-**Blast Theory, Mancini, C., Mills, D. S., University of Nottingham (2024).**
-Cat Royale. CHI 2024 Best Paper, Webby Award 2024.
+**Schneiders, E., Benford, S., Mancini, C., Mills, D. S., et al. (2024).**
+Designing Multispecies Worlds for Robots, Cats, and Humans. *CHI 2024*.
+(Academic primary citation.)
 
-**Used in:** Project framing, `ETHICS.md`
+**Project credit:** Blast Theory, Mancini, C., Mills, D. S., University of
+Nottingham (2024). Cat Royale. CHI 2024 Best Paper, Webby Award 2024.
+
+**Used in:** Project framing, `ETHICS.md`, `docs/ideas/theoretical-foundations.md`
 Closest precedent for ethically grounded ACI systems. Our explicit lineage.
+The CHI 2024 paper is the academic source; the project name and the
+Blast Theory / Mancini / Mills / Nottingham attribution is how the field
+refers to the work — both citations belong here.
 
 ## 11. Habituation and attention
 
@@ -131,3 +149,47 @@ NOTE: habituation rates are placeholders pending real-cat data — see ADR 0003.
 **Used in:** `litterbox/tests/ethological-plausibility.test.ts`
 Reference for plausible state-change rates per session. Used as anchor for
 the regression tests that catch state-machine flicker — see ADR 0004.
+
+## 13. Cat-vocalisation context classification (proof-of-concept)
+
+**Ntalampiras, S., Ludovico, L. A., Presti, G., Prato Previde, E., Battini,
+M., Cannas, S., Palestrini, C., & Mattiello, S. (2019).** Automatic
+Classification of Cat Vocalizations Emitted in Different Contexts.
+*Animals*, 9(8), 543.
+DOI: [10.3390/ani9080543](https://doi.org/10.3390/ani9080543)
+
+**Used in:** `README.md` (framing of MeowTalk overreach).
+Proof-of-concept showing that the emission context of a meow can be
+algorithmically classified across three contexts (waiting for food,
+isolation in unfamiliar environment, brushing) with a DAG-HMM model
+reaching 95.94% accuracy. The authors describe this themselves as "a
+proof of concept" for context identification — narrow, peer-reviewed
+scope. This is the scientific basis MeowTalk traces back to; MeowTalk's
+translation claims went beyond what this work supports (see Section 14).
+
+See also the cross-reference note in Section 8 distinguishing this from
+the CatMeows dataset and from the 2020 human-classification paper.
+
+## 14. MeowTalk overreach (popular-press source)
+
+**Anthes, E.** Did My Cat Just Hit On Me? An Adventure in Pet Translation.
+*The New York Times*.
+
+**Used in:** `README.md` (the "It's not pure science at this stage" quote).
+Anthes attributes the "not pure science at this stage" admission to one of
+MeowTalk's own inventors, not to the underlying scientific authors. This
+matters: the framing is "proof-of-concept overstretched to product, admitted
+by the product itself", not "external scientific criticism of MeowTalk".
+
+## 15. ACI ethical principles (academic primary)
+
+**Van Patter, L. E. & Blattner, C. (2020).** Advancing Ethical Principles
+for Non-Invasive, Respectful Research with Nonhuman Animal Participants.
+*Society & Animals*, 28(2), 171–190.
+
+**Used in:** Project framing, `ETHICS.md` (when referencing the
+non-maleficence / beneficence / voluntary-participation triad).
+Source of the three principles (non-maleficence, beneficence, voluntary
+participation) that Cat Royale adopted and that this project inherits via
+Cat Royale's lineage. When citing Cat Royale's ethical structure, also
+cite Van Patter & Blattner as the academic origin of the principle set.
