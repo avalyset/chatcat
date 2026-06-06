@@ -6,7 +6,7 @@ Utfallet er negativt og inkonklusivt, men det er ikke tomt. Vi avgjorde ikke fen
 
 ### 4.2 Hvorfor gaten er bidraget
 
-Uten gaten ville 0011s M' = 3/5 blitt rapportert som et borderline-funn om agenten, og 0012s nye seeds ville produsert et M''-tall som så ut som data. Gaten viste at begge i virkeligheten ville vært funn om måle-vinduet, ikke om agenten, og nektet å produsere et rent tall der tallet ville vært en artefakt. Innenfor RL-evaluering generaliserer dette så langt og ikke lenger: enhver terskel-basert reproduserbarhets-vurdering der terskelen er forankret i ett regime og anvendt i et annet er sårbar for denne feilen, og gaten er en billig sjekk mot den. Den er en sjekk mot én feilklasse, ikke en løsning på RL-evaluering.
+Uten gaten ville kriterie-validitet-reanalysens M' = 3/5 blitt rapportert som et borderline-funn om agenten, og N=15-escaleringens nye seeds ville produsert et M''-tall som så ut som data. Gaten viste at begge i virkeligheten ville vært funn om måle-vinduet, ikke om agenten, og nektet å produsere et rent tall der tallet ville vært en artefakt. Innenfor RL-evaluering generaliserer dette så langt og ikke lenger: enhver terskel-basert reproduserbarhets-vurdering der terskelen er forankret i ett regime og anvendt i et annet er sårbar for denne feilen, og gaten er en billig sjekk mot den. Den er en sjekk mot én feilklasse, ikke en løsning på RL-evaluering.
 
 ### 4.3 Begrensninger
 
@@ -14,7 +14,7 @@ Simulatoren er ikke virkelighetstro; sim-to-real-gapet er udokumentert til v0.4.
 
 
 
-Gaten tilhører en bredere klasse av sjekker. I ethvert system der et lært lag og et deterministisk lag deler ansvar, står spørsmålet åpent om det lærte laget stille har overtatt en funksjon det deterministiske laget skulle eie — og evaluerings-gater er én måte å fange den lekkasjen på. I dette arbeidet fant vi ett konkret punkt: en hard etisk skranke ble håndhevet på den regelbaserte agent-banen, men ikke på RL-banen, til vi lukket det (0009). Det er en instans av lekkasjen — det lærte laget opererte uten en skranke det deterministiske laget eide.
+
 
 
 

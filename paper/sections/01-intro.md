@@ -4,7 +4,7 @@
 
 I companion-AI for dyr er overpåstand den dokumenterte feilmoden. Stavros Ntalampiras' arbeid fra 2019 viste at en algoritme kunne skille kattens mjau i tre kontekster — en smal, etterprøvbar påstand med dekning i dataene [ref]. MeowTalk bygde på det grunnlaget og markedsførte oversettelse av kattens vokalisering; en av appens egne skapere innrømmet overfor New York Times at dette ikke er ren vitenskap på dette stadiet [ref]. Avstanden mellom de to — solid smal vitenskap og produkt-påstanden som strakk den — er feilmoden vi designer mot.
 
-Animal-computer interaction har et motstykke. Cat Royale-arbeidet argumenterer for at designet av selve verdenen et system opererer i — og menneskelig involvering i dyrevelferd og breakdown-recovery — er like sentralt som teknologien selv, ikke en ramme rundt den [ref], forankret i eksplisitte etiske prinsipper: non-maleficence, beneficence, voluntary participation [ref]. Det er den linjen vi plasserer oss i.
+ACI har et motstykke. Cat Royale-arbeidet argumenterer for at designet av selve verdenen et system opererer i — og menneskelig involvering i dyrevelferd og breakdown-recovery — er like sentralt som teknologien selv, ikke en ramme rundt den [ref], forankret i eksplisitte etiske prinsipper: non-maleficence, beneficence, voluntary participation [ref]. Det er den linjen vi plasserer oss i.
 
 Men dette papiret handler ikke om et ACI-resultat. Det handler om evaluerings-metoden som hindret oss i å gjøre den samme feilen i motsatt retning — å rapportere et rent negativt funn som var like ufundert som et overdrevet positivt.
 
@@ -12,7 +12,7 @@ Men dette papiret handler ikke om et ACI-resultat. Det handler om evaluerings-me
 
 RL-evaluering pre-registrerer sjelden. Når den gjør det, registreres terskelen, men ikke om terskelen er adskillbar fra støyen i vinduet den måles mot. Det er hullet.
 
-En terskel T kan valideres mot utfalls-spennet — avstanden fra peak til slutt — og se meningsfull ut. Den samme T kan være støy-dominert i ep_init-vinduet den faktisk anvendes mot. Når den er det, er spørsmålet om en gitt seed passerer nær et myntkast. Resultatet leses som et funn om agenten; det er et funn om vinduet.
+En terskel T kan valideres mot utfalls-spennet — avstanden fra peak til slutt — og se meningsfull ut. Den samme T kan være støy-dominert i det vinduet T faktisk anvendes mot — ep_init, snittet av returns over et definert vindu tidlig i trening. Når den er det, er spørsmålet om en gitt seed passerer nær et myntkast. Resultatet leses som et funn om agenten; det er et funn om vinduet.
 
 ### 1.3
 

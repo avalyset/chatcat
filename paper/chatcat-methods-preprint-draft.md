@@ -2,7 +2,13 @@
   This document is assembled from the five voice-locked sections in
   paper/sections/ + figures/ + tables/ + CITATIONS.md + git log.
   Assembled by mechanical placement; prose is not rewritten.
-  Locked numbers are verified against ADR 0010/0011/0012 resolutions.
+  Locked numbers verified against ADR 0010/0011/0012 resolutions.
+  Venue-independent dejargonization applied per godkjent tabell:
+  F-numbers, ADR-numbers, and "fyrte" replaced with semantic prose
+  in main text + tables; ADR-numbers retained in Appendix A
+  (cross-reference index). PNG-internal captions still carry pre-
+  dejargonization labels — figures will be regenerated for vector
+  export at venue-tilpasning, and plot script will be updated then.
 -->
 
 # [PLACEHOLDER — tittel: Eirik bekrefter]
@@ -26,7 +32,7 @@ EcoDeco AS
 
 RL-agenter evalueres mot terskler som sjelden valideres mot støyen i sitt eget måle-vindu. En terskel kan være meningsfull mot utfalls-spennet og samtidig støy-dominert i vinduet den faktisk anvendes i — og da er et tilsynelatende rent resultat en måle-artefakt. Hvilke seeds som passerer er nær et myntkast, presentert som funn.
 
-Vi pre-registrerte en evaluering av en RL-agent mot en etologisk simulator i en ACI-kontekst, og innførte en kriterie-validitet-gate: en sjekk, registrert sammen med metoden, som verifiserer at terskelen er adskillbar fra støyen i sitt anvendelsesvindu før den anvendes. Gaten endret utfallet i tre dokumenterte tilfeller. Et climb-ledd var målt mot et vindu der støyen lå rundt 10× terskelen — en inkonsistens vi selv hadde bygd inn. Måle-vinduet viste seg direksjons-symmetrisk: det skjulte det observerte fenomenet på noen seeds og fabrikkerte det på andre. Og ved escalering feilet gaten på et nytt seed-utvalg fordi noise-skalaen var rundt 50% høyere ved identisk konfig.
+Vi pre-registrerte en evaluering av en RL-agent mot en etologisk simulator i en ACI-kontekst (animal-computer interaction), og innførte en kriterie-validitet-gate: en sjekk, registrert sammen med metoden, som verifiserer at terskelen er adskillbar fra støyen i sitt anvendelsesvindu før den anvendes. Gaten endret utfallet i tre dokumenterte tilfeller. Et climb-ledd var målt mot et vindu der støyen lå rundt 10× terskelen — en inkonsistens vi selv hadde bygd inn. Måle-vinduet viste seg direksjons-symmetrisk: det skjulte det observerte fenomenet på noen seeds og fabrikkerte det på andre. Og ved escalering feilet gaten på et nytt seed-utvalg fordi noise-skalaen var rundt 50% høyere ved identisk konfig.
 
 Det siste er poenget. Fenomenet kunne ikke avgjøres som robust eller ikke-robust på oppnåelig compute — ikke av datamangel, men fordi målbarheten selv er seed-variabel, på et nivå dypere enn fenomenet. Bidraget er metoden som gjorde den nektelsen pre-registrert og synlig i stedet for å produsere et falskt rent tall. I felt der overpåstand er den dokumenterte feilmoden, er gate-beskyttet pre-registrert evaluering infrastruktur for ærlig agent-vurdering.
 
@@ -38,7 +44,7 @@ Det siste er poenget. Fenomenet kunne ikke avgjøres som robust eller ikke-robus
 
 I companion-AI for dyr er overpåstand den dokumenterte feilmoden. Stavros Ntalampiras' arbeid fra 2019 viste at en algoritme kunne skille kattens mjau i tre kontekster — en smal, etterprøvbar påstand med dekning i dataene (Ntalampiras et al. 2019). MeowTalk bygde på det grunnlaget og markedsførte oversettelse av kattens vokalisering; en av appens egne skapere innrømmet overfor New York Times at dette ikke er ren vitenskap på dette stadiet (Anthes, NYT). Avstanden mellom de to — solid smal vitenskap og produkt-påstanden som strakk den — er feilmoden vi designer mot.
 
-Animal-computer interaction har et motstykke. Cat Royale-arbeidet argumenterer for at designet av selve verdenen et system opererer i — og menneskelig involvering i dyrevelferd og breakdown-recovery — er like sentralt som teknologien selv, ikke en ramme rundt den (Schneiders et al. 2024), forankret i eksplisitte etiske prinsipper: non-maleficence, beneficence, voluntary participation (Van Patter & Blattner 2020). Det er den linjen vi plasserer oss i.
+ACI har et motstykke. Cat Royale-arbeidet argumenterer for at designet av selve verdenen et system opererer i — og menneskelig involvering i dyrevelferd og breakdown-recovery — er like sentralt som teknologien selv, ikke en ramme rundt den (Schneiders et al. 2024), forankret i eksplisitte etiske prinsipper: non-maleficence, beneficence, voluntary participation (Van Patter & Blattner 2020). Det er den linjen vi plasserer oss i.
 
 Men dette papiret handler ikke om et ACI-resultat. Det handler om evaluerings-metoden som hindret oss i å gjøre den samme feilen i motsatt retning — å rapportere et rent negativt funn som var like ufundert som et overdrevet positivt.
 
@@ -46,7 +52,7 @@ Men dette papiret handler ikke om et ACI-resultat. Det handler om evaluerings-me
 
 RL-evaluering pre-registrerer sjelden. Når den gjør det, registreres terskelen, men ikke om terskelen er adskillbar fra støyen i vinduet den måles mot. Det er hullet.
 
-En terskel T kan valideres mot utfalls-spennet — avstanden fra peak til slutt — og se meningsfull ut. Den samme T kan være støy-dominert i ep_init-vinduet den faktisk anvendes mot. Når den er det, er spørsmålet om en gitt seed passerer nær et myntkast. Resultatet leses som et funn om agenten; det er et funn om vinduet.
+En terskel T kan valideres mot utfalls-spennet — avstanden fra peak til slutt — og se meningsfull ut. Den samme T kan være støy-dominert i det vinduet T faktisk anvendes mot — ep_init, snittet av returns over et definert vindu tidlig i trening. Når den er det, er spørsmålet om en gitt seed passerer nær et myntkast. Resultatet leses som et funn om agenten; det er et funn om vinduet.
 
 ### 1.3
 
@@ -78,7 +84,7 @@ Hver metodisk beslutning ble låst og pushet til versjonskontroll før data ble 
 
 ### 2.3 Forankrings-seed
 
-Tersklene er målt, ikke gjettet. To terskler styrer evalueringen: T for climb/slide, K for critic-konvergens. Begge forankres i målt skala fra én dedikert forankrings-kjøring i stedet for i et valgt tall. Forankrings-seeden måler skala-størrelsene — inter-update-SD i et definert vindu, median value_loss i et sent vindu — og T og K settes som multiplum av disse.
+Tersklene er målt, ikke gjettet. To terskler styrer evalueringen: T for climb/slide, K for critic-konvergens. Begge forankres i målt skala fra én dedikert forankrings-kjøring i stedet for i et valgt tall. Forankrings-seeden måler skala-størrelsene — inter-update-SD i et definert vindu (etter at det rullerende 100-episoders bufferet har fylt seg), median value_loss i et sent vindu — og T og K settes som multiplum av disse.
 
 Én disiplin her er avgjørende. Forankrings-seedens eget utfall — om den selv reproduserte fenomenet — leses aldri og teller ikke som datapunkt. Den setter skala, ikke resultat. Lot vi den telle som begge deler, ville kriteriet blitt sirkulært: en seed som var med på å definere terskelen kunne ikke samtidig være et uavhengig test av den.
 
@@ -86,15 +92,15 @@ Tallene: T = 0.0922, tre ganger den sen-stabile inter-update-SD-en på 0.0307. K
 
 ### 2.4 Kriterie-validitet-gate
 
-Dette er bidraget. Før en terskel anvendes, verifiserer vi at den er adskillbar fra støyen i sitt eget anvendelsesvindu: T må ligge minst rundt to ganger over støy-differansen, σ√2, i det vinduet.
+Dette er bidraget. Før en terskel anvendes, verifiserer vi at den er adskillbar fra støyen i sitt eget anvendelsesvindu: T må ligge minst rundt to ganger over støy-differansen i det vinduet. Vi skriver σ_diff = σ × √2 for støyen i differansen mellom to vindu-snitt (under en forenklende uavhengighets-antakelse).
 
 Hvorfor det trengs: standard pre-registrering låser terskelen og validerer den mot utfalls-spennet, peak minus slutt. Den validerer den ikke mot støyen i vinduet terskelen faktisk måles mot. En terskel kan passere den første sjekken og likevel være støy-dominert i anvendelsesvinduet. Når den er det, er hvilke seeds som passerer nær tilfeldig — og resultatet leses som et funn om agenten når det er et funn om vinduet.
 
-Gaten har et pre-registrert binært utfall. PASS: terskelen er gyldig, evalueringen fortsetter. FAIL: terskelen er støy-dominert i dette vinduet, og vi stopper i stedet for å anvende den. Vi kjørte gaten to ganger. Den passerte første gang (T/σ_diff = 2.73) og feilet andre gang (T/σ_diff = 1.80). At den feilet på et reelt datasett (ADR 0012, T/σ_diff = 1.80) viser at PASS i ADR 0011 (T/σ_diff = 2.73) ikke var forhåndsbestemt av konstruksjonen.
+Gaten har et pre-registrert binært utfall. PASS: terskelen er gyldig, evalueringen fortsetter. FAIL: terskelen er støy-dominert i dette vinduet, og vi stopper i stedet for å anvende den. Vi kjørte gaten to ganger. Den passerte første gang (T/σ_diff = 2.73) og feilet andre gang (T/σ_diff = 1.80). At den feilet på et reelt datasett (N=15-escaleringen, T/σ_diff = 1.80) viser at PASS i kriterie-validitet-reanalysen (T/σ_diff = 2.73) ikke var forhåndsbestemt av konstruksjonen.
 
 ### 2.5 Falsifiserings-struktur
 
-Suksesskriteriet og falsifiseringen var pre-registrert: hvor mange seeds som må reprodusere fenomenet for at det regnes robust, og hva som teller som ikke-robust. Escaleringen la til et tredje utfall som er det viktigste designvalget i hele strukturen. Midtbåndet er et ekte funn, ikke en feilet test. Hvis fenomenet inntreffer omtrent halvparten av gangene uten skjult struktur under, *er* det svaret — fenomenet er intrinsisk seed-variabelt — og ikke et rop om mer compute. Vi pre-registrerte det utfallet nettopp for å lukke uendelig-escalation-fellen: uten et definert midtbånd kan et tvetydig resultat alltid begrunne én kjøring til, i det uendelige.
+Suksesskriteriet og falsifiseringen var pre-registrert: hvor mange seeds som må reprodusere fenomenet for at det regnes robust, og hva som teller som ikke-robust. Escaleringen la til et tredje utfall som er det viktigste designvalget i hele strukturen. Midtbåndet (det mellomste utfalls-båndet, pre-registrert som «intrinsisk seed-variabelt») er et ekte funn, ikke en feilet test. Hvis fenomenet inntreffer omtrent halvparten av gangene uten skjult struktur under, *er* det svaret — fenomenet er intrinsisk seed-variabelt — og ikke et rop om mer compute. Vi pre-registrerte det utfallet nettopp for å lukke uendelig-escalation-fellen: uten et definert midtbånd kan et tvetydig resultat alltid begrunne én kjøring til, i det uendelige.
 
 For å skille et optimaliserings-artefakt fra et trekk ved reward-landskapet pre-registrerte vi en diagnostisk signatur, SIG-EXPLORATION: hvis variansen i policyen (`actor_logstd_mean`) ikke kollapser samtidig som critic-en (`value_loss`) konvergerer lavt, ligger sliden på optimaliserings-siden. Signaturen leses av logger som allerede finnes — den koster ingen ny trening.
 
@@ -112,25 +118,25 @@ Alle fem seeds i {6..10} klatrer til en peak og glir tilbake. I form er climb-th
 
 ![Fig 1 — Climb-then-slide in FORM on N=5 seeds {6..10}](figures/fig1_climb_then_slide.png)
 
-*Fig 1 — Climb-then-slide in FORM on N=5 seeds {6..10}. All five seeds climb to a peak and slide back (climb-then-slide in FORM = 5/5; F4-direction confirmed universal). Dots mark each seed's peak update. Whether the amplitude passes T = 0.0922 for the climb-leg depends on the ep_init measurement window — that distinction is the subject of Fig 3.*
+*Fig 1 — Climb-then-slide in FORM on N=5 seeds {6..10}. All five seeds climb to a peak and slide back (climb-then-slide in FORM = 5/5; slide-direction confirmed universal across all five seeds). Dots mark each seed's peak update. Whether the amplitude passes T = 0.0922 for the climb-leg depends on the ep_init measurement window — that distinction is the subject of Fig 3.*
 
 ### 3.2 Den direksjons-symmetriske konfunderen
 
-Det samme måle-vinduet løy begge veier (Fig 3). Med det opprinnelige ep_init-vinduet [100,150] målte seed 6 og 8 climb-leddet under T — ikke-reprodusert. Flyttet til det buffer-fulle vinduet passerte de samme to over T. Vinduet hadde skjult ekte climb-then-slide. Samtidig gikk seed 10 motsatt vei: over T i det opprinnelige vinduet, under T i det reviderte. Vinduet hadde fabrikkert et fenomen som ikke var der.
+Vi skriver CTS (climb-then-slide) når vi viser til hvorvidt en seed reproduserte fenomenet mot terskelen, og M, M', M'' for reproduksjons-tellingen i hver av de tre måle-passene. Det samme måle-vinduet løy begge veier (Fig 3). Med det opprinnelige ep_init-vinduet [100,150] målte seed 6 og 8 climb-leddet under T — ikke-reprodusert. Flyttet til det buffer-fulle vinduet passerte de samme to over T. Vinduet hadde skjult ekte climb-then-slide. Samtidig gikk seed 10 motsatt vei: over T i det opprinnelige vinduet, under T i det reviderte. Vinduet hadde fabrikkert et fenomen som ikke var der.
 
 Det er nøkkelfunnet. En vindu-endring som bare hadde skjult, eller bare fabrikkert, kunne avskrives som enveis-bias man korrigerer for. At den samme endringen flyttet to seeds inn i et positivt resultat og en tredje ut av det, samtidig, viser at hvilke seeds som passerer er styrt av måle-valget, ikke av agenten. Tallene flyttet seg deretter: M på det opprinnelige vinduet var 2/5, M' på det buffer-fulle 3/5 (Tabell 2).
 
 ![Fig 3 — Direction-symmetric ep_init-window confunder on seeds {6..10}](figures/fig3_confounder_symmetric.png)
 
-*Fig 3 — Direction-symmetric ep_init-window confunder on seeds {6..10} (KEY). Each arrow shows one seed's climb shifting between ep_init windows: tail = ADR 0010 [100,150] window; head = ADR 0011 buffer-full window. The confunder lied both ways: seeds 6 and 8 had real CTS hidden by buffer noise (green, ✗→✓); seed 10's apparent CTS was a buffer-noise artefact (magenta, ✓→✗). M: 2/5 → M': 3/5. Marker colours are neutral by design — the colour story here is flip direction (arrows). Fig 1's per-seed colours code seed identity, a separate scheme.*
+*Fig 3 — Direction-symmetric ep_init-window confunder on seeds {6..10} (KEY). Each arrow shows one seed's climb shifting between ep_init windows: tail = original [100,150] window; head = revised buffer-full window. The confunder lied both ways: seeds 6 and 8 had real CTS hidden by buffer noise (green, ✗→✓); seed 10's apparent CTS was a buffer-noise artefact (magenta, ✓→✗). M: 2/5 → M': 3/5. Marker colours are neutral by design — the colour story here is flip direction (arrows). Fig 1's per-seed colours code seed identity, a separate scheme.*
 
-**Tabell 2 — Phenomenon-reproduction count across measurement passes.** Climb-then-slide reproduction count `M / M' / M''` across the three ADR measurement passes on the same phenomenon-question. T = 0.0922 (locked from ADR 0010); the only thing that changes is the ep_init-window definition.
+**Tabell 2 — Phenomenon-reproduction count across measurement passes.** Climb-then-slide reproduction count `M / M' / M''` across the three measurement passes on the same phenomenon-question. T = 0.0922 (locked from the original pre-registration); the only thing that changes is the ep_init-window definition.
 
-| pass | ADR | seeds | ep_init window | gate | count | reading |
+| pass | measurement pass | seeds | ep_init window | gate | count | reading |
 |---|---|---|---|---|---:|---|
-| M | 0010 main run | {6..10} | original [100, 150] | not built yet | **2/5** | F3 fires on locked criterion |
-| M' | 0011 reanalysis | {6..10} | revised buffer-full | PASS (T/σ_diff = 2.73) | **3/5** | borderline, inconclusive on N=5 reanalysis-budget |
-| M'' | 0012 escalation | {11..20} added | revised buffer-full | **FAIL (T/σ_diff = 1.80)** | not tallied | climb-readout not performed per pre-reg §3 |
+| M | original pre-registration | {6..10} | original [100, 150] | not built yet | **2/5** | robustness-falsification triggers on locked criterion |
+| M' | criterion-validity reanalysis | {6..10} | revised buffer-full | PASS (T/σ_diff = 2.73) | **3/5** | borderline, inconclusive on N=5 reanalysis-budget |
+| M'' | N=15 escalation | {11..20} added | revised buffer-full | **FAIL (T/σ_diff = 1.80)** | not tallied | climb-readout not performed per the pre-registered gate |
 
 *Per-seed flips between M and M' (same data, only ep_init window changed):*
 
@@ -144,15 +150,15 @@ Det er nøkkelfunnet. En vindu-endring som bare hadde skjult, eller bare fabrikk
 
 ### 3.3 Mekanismen
 
-På de seedene som reproduserer climb-then-slide holder SIG-EXPLORATION-signaturen (Fig 2). Variansen i policyen kollapser ikke under peak, og critic-en er konvergert lavt. Sliden er optimaliserings-siden av en policy med vid varians, ikke et resultat av varians-kollaps. Mønsteret er det samme på alle de reproduserende seedene, på tvers av 0010 og 0011.
+På de seedene som reproduserer climb-then-slide holder SIG-EXPLORATION-signaturen (Fig 2). Variansen i policyen kollapser ikke under peak, og critic-en er konvergert lavt. Sliden er optimaliserings-siden av en policy med vid varians, ikke et resultat av varians-kollaps. Mønsteret er det samme på alle de reproduserende seedene, på tvers av begge måle-passene.
 
 ![Fig 2 — SIG-EXPLORATION signature on seed 9](figures/fig2_sig_exploration.png)
 
-*Fig 2 — SIG-EXPLORATION signature on seed 9 (CTS-reproducing in both ADR 0010 and ADR 0011). Variance (actor_logstd) does not collapse during peak; critic (value_loss) is converged low. The mechanism (SIG-EXPLORATION) holds: slide is the optimisation side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across 0010 and 0011.*
+*Fig 2 — SIG-EXPLORATION signature on seed 9 (CTS-reproducing in both measurement passes). Variance (actor_logstd) does not collapse during peak; critic (value_loss) is converged low. The mechanism (SIG-EXPLORATION) holds: slide is the optimisation side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across both passes.*
 
 ### 3.4 Gaten passerte, så feilet
 
-I 0011 passerte kriterie-validitet-gaten — T/σ_diff = 2.73 — og M' landet på 3/5. Borderline, og inkonklusivt på fem seeds. Escaleringen i 0012 la til ti nye seeds, {11..20}, for N=15. Der feilet gaten: T/σ_diff = 1.80. Den samme treningskonfigen produserte rundt 50% høyere median noise-skala på det nye seed-settet, 0.0362 mot 0.0239 (Fig 4, Tabell 1). STOP fyrte før M'' ble talt.
+I kriterie-validitet-reanalysen passerte gaten — T/σ_diff = 2.73 — og M' landet på 3/5. Borderline, og inkonklusivt på fem seeds. N=15-escaleringen la til ti nye seeds, {11..20}, for N=15. Der feilet gaten: T/σ_diff = 1.80. Den samme treningskonfigen produserte rundt 50% høyere median noise-skala på det nye seed-settet, 0.0362 mot 0.0239 (Fig 4, Tabell 1). Stopp-regelen ble utløst før M'' ble talt.
 
 Funnet ligger der. Målbarheten selv er seed-variabel: noise-skalaen T ble forankret mot på ett seed-sett gjelder ikke på et annet ved identisk konfig. Det er et nivå dypere enn fenomenet. Vi kan ikke avgjøre om climb-then-slide er robust — ikke fordi vi mangler data, men fordi terskelen ikke er stabilt anvendbar på tvers av seeds.
 
@@ -160,29 +166,29 @@ Funnet ligger der. Målbarheten selv er seed-variabel: noise-skalaen T ble foran
 
 *Fig 4 — Same training config, ~50% different median noise scale across seed-batches. Per-seed inter-update-SD of ep_return_mean_recent in each seed's revised buffer-full ep_init window. Identical training config produces medians 0.024 vs 0.036 (50% difference) across the two seed-batches — large enough to flip the kriterie-validitet-gate from PASS (2.73) to FAIL (1.80) without any methodology change.*
 
-**Tabell 1 — Kriterie-validitet-gate: ADR 0011 PASS vs ADR 0012 FAIL.** Per-seed inter-update-SD of `ep_return_mean_recent` over each seed's revised buffer-full ep_init-window (first 51 updates with `ep_return_n_recent ≥ 100`). Gate fires if `T / (σ_median × √2) ≥ ~2`.
+**Tabell 1 — Kriterie-validitet-gate: criterion-validity reanalysis PASS vs N=15 escalation FAIL.** Per-seed inter-update-SD of `ep_return_mean_recent` over each seed's revised buffer-full ep_init-window (first 51 updates with `ep_return_n_recent ≥ 100`). Gate fires if `T / (σ_median × √2) ≥ ~2`.
 
 | seed | inter-update-SD | group |
 |---:|---:|:---|
-| 6 | 0.021220 | {6..10} (ADR 0011) |
-| 7 | 0.028428 | {6..10} (ADR 0011) |
-| 8 | 0.018406 | {6..10} (ADR 0011) |
-| 9 | 0.023918 | {6..10} (ADR 0011) |
-| 10 | 0.078524 | {6..10} (ADR 0011) |
-| 11 | 0.030381 | {11..20} (ADR 0012) |
-| 12 | 0.033319 | {11..20} (ADR 0012) |
-| 13 | 0.026707 | {11..20} (ADR 0012) |
-| 14 | 0.069636 | {11..20} (ADR 0012) |
-| 15 | 0.039013 | {11..20} (ADR 0012) |
-| 16 | 0.053293 | {11..20} (ADR 0012) |
-| 17 | 0.027316 | {11..20} (ADR 0012) |
-| 18 | 0.061690 | {11..20} (ADR 0012) |
-| 19 | 0.053154 | {11..20} (ADR 0012) |
-| 20 | 0.025466 | {11..20} (ADR 0012) |
+| 6 | 0.021220 | {6..10} (criterion-validity reanalysis) |
+| 7 | 0.028428 | {6..10} (criterion-validity reanalysis) |
+| 8 | 0.018406 | {6..10} (criterion-validity reanalysis) |
+| 9 | 0.023918 | {6..10} (criterion-validity reanalysis) |
+| 10 | 0.078524 | {6..10} (criterion-validity reanalysis) |
+| 11 | 0.030381 | {11..20} (N=15 escalation) |
+| 12 | 0.033319 | {11..20} (N=15 escalation) |
+| 13 | 0.026707 | {11..20} (N=15 escalation) |
+| 14 | 0.069636 | {11..20} (N=15 escalation) |
+| 15 | 0.039013 | {11..20} (N=15 escalation) |
+| 16 | 0.053293 | {11..20} (N=15 escalation) |
+| 17 | 0.027316 | {11..20} (N=15 escalation) |
+| 18 | 0.061690 | {11..20} (N=15 escalation) |
+| 19 | 0.053154 | {11..20} (N=15 escalation) |
+| 20 | 0.025466 | {11..20} (N=15 escalation) |
 
 *Aggregate (per group):*
 
-| | {6..10} (ADR 0011) | {11..20} (ADR 0012) |
+| | {6..10} (criterion-validity reanalysis) | {11..20} (N=15 escalation) |
 |---|---:|---:|
 | n seeds | 5 | 10 |
 | median σ | **0.023918** | **0.036166** |
@@ -190,7 +196,7 @@ Funnet ligger der. Målbarheten selv er seed-variabel: noise-skalaen T ble foran
 | T / σ_diff | **2.7257** | **1.8027** |
 | Gate decision (threshold ≥ ~2) | **PASS** | **FAIL** |
 
-T = 0.0922 (locked since commit `0140536`). Gaten fyrte i motsatte retninger på de to batchene tross identisk treningskonfigurasjon — bevis på at gaten ikke er en formalitet og at same-config noise-skala selv er substansiell.
+T = 0.0922 (locked since commit `0140536`). Gaten ble utløst i motsatte retninger på de to batchene tross identisk treningskonfigurasjon — bevis på at gaten ikke er en formalitet og at same-config noise-skala selv er substansiell.
 
 ---
 
@@ -202,7 +208,7 @@ Utfallet er negativt og inkonklusivt, men det er ikke tomt. Vi avgjorde ikke fen
 
 ### 4.2 Hvorfor gaten er bidraget
 
-Uten gaten ville 0011s M' = 3/5 blitt rapportert som et borderline-funn om agenten, og 0012s nye seeds ville produsert et M''-tall som så ut som data. Gaten viste at begge i virkeligheten ville vært funn om måle-vinduet, ikke om agenten, og nektet å produsere et rent tall der tallet ville vært en artefakt. Innenfor RL-evaluering generaliserer dette så langt og ikke lenger: enhver terskel-basert reproduserbarhets-vurdering der terskelen er forankret i ett regime og anvendt i et annet er sårbar for denne feilen, og gaten er en billig sjekk mot den. Den er en sjekk mot én feilklasse, ikke en løsning på RL-evaluering.
+Uten gaten ville kriterie-validitet-reanalysens M' = 3/5 blitt rapportert som et borderline-funn om agenten, og N=15-escaleringens nye seeds ville produsert et M''-tall som så ut som data. Gaten viste at begge i virkeligheten ville vært funn om måle-vinduet, ikke om agenten, og nektet å produsere et rent tall der tallet ville vært en artefakt. Innenfor RL-evaluering generaliserer dette så langt og ikke lenger: enhver terskel-basert reproduserbarhets-vurdering der terskelen er forankret i ett regime og anvendt i et annet er sårbar for denne feilen, og gaten er en billig sjekk mot den. Den er en sjekk mot én feilklasse, ikke en løsning på RL-evaluering.
 
 ### 4.3 Begrensninger
 
@@ -210,7 +216,7 @@ Simulatoren er ikke virkelighetstro; sim-to-real-gapet er udokumentert til v0.4.
 
 
 
-Gaten tilhører en bredere klasse av sjekker. I ethvert system der et lært lag og et deterministisk lag deler ansvar, står spørsmålet åpent om det lærte laget stille har overtatt en funksjon det deterministiske laget skulle eie — og evaluerings-gater er én måte å fange den lekkasjen på. I dette arbeidet fant vi ett konkret punkt: en hard etisk skranke ble håndhevet på den regelbaserte agent-banen, men ikke på RL-banen, til vi lukket det (0009). Det er en instans av lekkasjen — det lærte laget opererte uten en skranke det deterministiske laget eide.
+
 
 
 
@@ -234,7 +240,7 @@ Det vi tilbyr feltet er ikke et svar på climb-then-slide. Det er en metode som 
 
 ## Appendiks A — ADR-kjeden som reproduserbar evidens-spor
 
-Hele evalueringens beslutnings- og evidens-spor ligger committed på `origin/main`. Hver påstand i papirets §3 (Resultater) og §2.3–2.5 (forankrings-seed, gate, falsifiserings-struktur) peker på en av disse commitene som låser forutsetningen påstanden hviler på. Stub-commits låste metoden før data; resolution-commits rapporterte utfallet mot den allerede-frosne metoden.
+Hele evalueringens beslutnings- og evidens-spor ligger committed på `origin/main`. Hver påstand i papirets §3 (Resultater) og §2.3–2.5 (forankrings-seed, gate, falsifiserings-struktur) peker på en av disse commitene som låser forutsetningen påstanden hviler på. Stub-commits låste metoden før data; resolution-commits rapporterte utfallet mot den allerede-frosne metoden. ADR-numre beholdes i denne appendiksen som kryssreferanse-indeks; hovedteksten over bruker semantiske beskrivelser («den opprinnelige pre-registreringen», «kriterie-validitet-reanalysen», «N=15-escaleringen»).
 
 | Fase | Commit | Dato | Hva ble låst / rapportert |
 |---|---|---|---|
@@ -262,31 +268,47 @@ Devlog-entryer i `docs/observations/` gir tids-stempel og kort prosa for ADR 000
 ---
 
 <!--
-  ASSEMBLY NOTES — IKKE COMMITTET INNHOLD, MEN BEVISST KOMMENTAR I KILDEFILEN
+  ASSEMBLY NOTES — BEVISST KOMMENTAR I KILDEFILEN, IKKE COMMITTET INNHOLD
 
   Plassholdere (Eirik må bekrefte før låsing):
   - Tittel
   - Forfatter-blokk (Eirik Botten Nicolaysen / EcoDeco AS — bekreft affiliasjon,
     e-post, evt. ORCID, evt. medforfattere)
 
-  Submission-tilpasninger som er notert og IKKE gjort i denne montering:
+  Dejargonisering anvendt i denne re-monteringen (per godkjent tabell, gruppe 1+2+3+5):
+  - Gruppe 1 (ERSTATT): F-numre, nakne ADR-numre, "fyrte" — alle erstattet med
+    semantisk prosa i hovedtekst + inline-tabeller. ADR-numre og F1–F4 beholdes
+    i Appendiks A (kryssreferanse-indeks).
+  - Gruppe 2 (BEHOLD + FORKLAR): SIG-EXPLORATION, CTS, M/M'/M'', ep_init,
+    σ_diff, midtbånd, ACI — alle definert ved første forekomst.
+  - Gruppe 3: buffer-fullt vindu — én klargjøring "rullerende 100-episoders
+    bufferet" lagt til i §2.3.
+  - Gruppe 5: logg-navn (`actor_logstd_mean`, `value_loss`, `metrics.jsonl`,
+    etc.) — uendret, reproduserbarhets-presisjon.
+
+  Gruppe 4 (venue-avhengig) IKKE rørt:
+  - RL, PPO, ppo_continuous_action, Box(7,), CleanRL, warm-start, KL-anker,
+    reward-reshaping, stdio-bridge — står som de er.
+  - Appendiks A-labels (Framing(2), 0008-partial-data, holding-spørsmål) —
+    står som ADR-interne kryssreferanser.
+
+  Submission-tilpasninger som alt er notert og IKKE gjort:
   - Fig 1/2 ep_return-akse-konsistens (samme seed 9 leses ~+0.18 i Fig 1 og
     ~+0.24 i Fig 2 — sjekk eller forklar før external submission)
-  - Dejargonisering for ekstern leser: F3, SIG-EXPLORATION, CTS, M/M'/M''-notasjon
-    er presise for ADR-trail-lesere men opaque for noen uten kontekst. Strip eller
-    forklar ved venue-tilpasning. Repo-versjonen bevarer ADR-referansene for
-    intern sporbarhet.
-  - Vektor-PDF/SVG-eksport av figurer (endre savefig-utvidelsen i plot-scriptet)
+  - PNG-interne captions har fortsatt pre-dejargonization labels (F4-direction,
+    "ADR 0010"/"ADR 0011"). Plot-scriptet (`paper/plot_methods_figures.py`)
+    er ikke oppdatert. Figurene regenereres ved vector-eksport for submission;
+    da må også plot-scriptet oppdateres til å matche markdown-captions.
+  - Vektor-PDF/SVG-eksport (endre `savefig`-utvidelsen i plot-scriptet)
   - LaTeX-konvertering (om venue krever det)
+  - Venue-avhengig dejargonisering (gruppe 4) ved venue-valg
 
-  Alle disse venter på framing-runden — er ikke endringer i innholdet, kun
-  tilpasning til venue.
-
-  Verifisert i denne monteringen:
+  Verifisert i denne re-monteringen:
   - 7 talls-påstander mot resolutions: T = 0.0922, K = 0.004986, 0.030737,
     0.001662, 2.7257, 1.8027, 1391-update bit-identisk — alle matcher origin
   - 4 [ref]-markører i §1.1 fylt med verifiserte CITATIONS.md-formater
   - 10 commit-hashes i Appendiks A verifisert mot git log
   - Alle 4 figurer + 2 tabeller på disk og referert riktig i §3
   - 5 seksjons-prosa lest mekanisk fra paper/sections/ uten omskriving
+  - Dejargoniserings-tabellen anvendt presist per gruppe-godkjenning
 -->
