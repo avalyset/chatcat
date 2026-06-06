@@ -1,0 +1,7 @@
+## Abstract
+
+RL-agenter evalueres mot terskler som sjelden valideres mot støyen i sitt eget måle-vindu. En terskel kan være meningsfull mot utfalls-spennet og samtidig støy-dominert i vinduet den faktisk anvendes i — og da er et tilsynelatende rent resultat en måle-artefakt. Hvilke seeds som passerer er nær et myntkast, presentert som funn.
+
+Vi pre-registrerte en evaluering av en RL-agent mot en etologisk simulator i en ACI-kontekst, og innførte en kriterie-validitet-gate: en sjekk, registrert sammen med metoden, som verifiserer at terskelen er adskillbar fra støyen i sitt anvendelsesvindu før den anvendes. Gaten endret utfallet i tre dokumenterte tilfeller. Et climb-ledd var målt mot et vindu der støyen lå rundt 10× terskelen — en inkonsistens vi selv hadde bygd inn. Måle-vinduet viste seg direksjons-symmetrisk: det skjulte det observerte fenomenet på noen seeds og fabrikkerte det på andre. Og ved escalering feilet gaten på et nytt seed-utvalg fordi noise-skalaen var rundt 50% høyere ved identisk konfig.
+
+Det siste er poenget. Fenomenet kunne ikke avgjøres som robust eller ikke-robust på oppnåelig compute — ikke av datamangel, men fordi målbarheten selv er seed-variabel, på et nivå dypere enn fenomenet. Bidraget er metoden som gjorde den nektelsen pre-registrert og synlig i stedet for å produsere et falskt rent tall. I felt der overpåstand er den dokumenterte feilmoden, er gate-beskyttet pre-registrert evaluering infrastruktur for ærlig agent-vurdering.
