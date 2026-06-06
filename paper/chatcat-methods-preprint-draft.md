@@ -245,7 +245,7 @@ Hele evalueringens beslutnings- og evidens-spor ligger committed på `origin/mai
 | Fase | Commit | Dato | Hva ble låst / rapportert |
 |---|---|---|---|
 | **ADR 0010 — opprinnelig kriterium** | | | |
-| Stub (holding-spørsmål + SIG-EXPLORATION-diagnose) | `31c363e` | 2026-06-03 | Framing (2) valgt; mekanisme-diagnose på 0008-partial-data |
+| Stub (framings-spørsmål + SIG-EXPLORATION-diagnose) | `31c363e` | 2026-06-03 | Strukturelt-funn-framing valgt (ikke deployerbar fiks); mekanisme-diagnose på partial-data fra forutgående evalueringsrunde |
 | Pre-reg (T og K låst fra forankrings-seed) | `0140536` | 2026-06-04 | T = 0.0922, K = 0.004986, peak-vindu, falsifiserere F1–F4 |
 | Resolution (hovedrunde {6..10}, F3 fyrte) | `1ba60c0` | 2026-06-05 | M = 2/5 mot låst kriterium; climb-vindu-konfunder dokumentert |
 | **ADR 0011 — kriterie-validitet-gate innført** | | | |
@@ -286,11 +286,16 @@ Devlog-entryer i `docs/observations/` gir tids-stempel og kort prosa for ADR 000
   - Gruppe 5: logg-navn (`actor_logstd_mean`, `value_loss`, `metrics.jsonl`,
     etc.) — uendret, reproduserbarhets-presisjon.
 
-  Gruppe 4 (venue-avhengig) IKKE rørt:
+  Gruppe 4 (venue-avhengig) — venue satt til teknisk ACI/CHI:
   - RL, PPO, ppo_continuous_action, Box(7,), CleanRL, warm-start, KL-anker,
-    reward-reshaping, stdio-bridge — står som de er.
+    reward-reshaping, stdio-bridge — beholdes uforklart (standard for et
+    teknisk ACI/CHI-publikum).
   - Appendiks A-labels (Framing(2), 0008-partial-data, holding-spørsmål) —
-    står som ADR-interne kryssreferanser.
+    ryddet for prosjekt-intern bokføring, erstattet med semantiske
+    beskrivelser («framings-spørsmål», «strukturelt-funn-framing valgt
+    (ikke deployerbar fiks)», «partial-data fra forutgående
+    evalueringsrunde»). ADR-NUMRENE (0010, 0011, 0012) beholdes som
+    kryssreferanse-indeks.
 
   Submission-tilpasninger som alt er notert og IKKE gjort:
   - Fig 1/2 ep_return-akse-konsistens (samme seed 9 leses ~+0.18 i Fig 1 og
@@ -301,7 +306,6 @@ Devlog-entryer i `docs/observations/` gir tids-stempel og kort prosa for ADR 000
     da må også plot-scriptet oppdateres til å matche markdown-captions.
   - Vektor-PDF/SVG-eksport (endre `savefig`-utvidelsen i plot-scriptet)
   - LaTeX-konvertering (om venue krever det)
-  - Venue-avhengig dejargonisering (gruppe 4) ved venue-valg
 
   Verifisert i denne re-monteringen:
   - 7 talls-påstander mot resolutions: T = 0.0922, K = 0.004986, 0.030737,
