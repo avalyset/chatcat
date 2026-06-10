@@ -6,13 +6,16 @@ on commit `13b8889` (origin/main).
 
 ---
 
-## Title (Eirik picks one — three candidates, lead with the evaluation method)
+## Title
 
-1. **A Criterion-Validity Gate for Threshold-Based Reproducibility Assessment in RL** *(recommended — direct, names the contribution, mirrors §1.3)*
-2. **Pre-Registration Is Not Enough: Gating Thresholds Against Application-Window Noise**
-3. **When Measurability Is Seed-Variable: A Pre-Registration Discipline for RL Evaluation Under Noise-Dominated Thresholds**
+**Selected (locked):**
 
-Selected: `[PLACEHOLDER — Eirik to mark]`
+**A Criterion-Validity Gate for Threshold-Based Reproducibility Assessment in RL**
+
+*Eirik confirmed selection from the three candidates after reading the assembled draft. The title leads with the evaluation method (the contribution) rather than the companion-AI test bench, mirrors §1.3, and is cs.LG-appropriate. Candidates (b) and (c) (preserved here for historical record) were:*
+
+- *(b) Pre-Registration Is Not Enough: Gating Thresholds Against Application-Window Noise*
+- *(c) When Measurability Is Seed-Variable: A Pre-Registration Discipline for RL Evaluation Under Noise-Dominated Thresholds*
 
 ---
 
