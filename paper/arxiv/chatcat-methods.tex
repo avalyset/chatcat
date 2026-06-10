@@ -42,7 +42,7 @@
 % PLACEHOLDER --- Eirik to confirm affiliation, email, ORCID.
 Eirik Botten Nicolaysen\\
 EcoDeco AS\\
-\texttt{[email pending]}
+\texttt{eirik@ecodeco.no}
 }
 
 \date{\today}
@@ -130,7 +130,8 @@ The gate has a pre-registered binary outcome. PASS: the threshold is valid, the 
 
 The success criterion and the falsification were pre-registered: how many seeds must reproduce the phenomenon for it to count as robust, and what counts as not-robust. The escalation added a third outcome that is the most important design choice in the whole structure. The middle band (the middle outcome band, pre-registered as ``intrinsically seed-variable'') is a real finding, not a failed test. If the phenomenon occurs about half the time without hidden structure beneath it, \emph{that} is the answer --- the phenomenon is intrinsically seed-variable --- and not a call for more compute. We pre-registered that outcome precisely to close the infinite-escalation trap: without a defined middle band, an ambiguous result can always justify one more run, indefinitely.
 
-To distinguish an optimisation artefact from a feature of the reward landscape, we pre-registered a diagnostic signature, SIG-EXPLORATION: if the variance in the policy (\code{actor\_logstd\_mean}) does not collapse while the critic (\code{value\_loss}) converges low, the slide sits on the optimisation side. The signature is read from logs that already exist --- it costs no new training.
+{\sloppy
+To distinguish an optimisation artefact from a feature of the reward landscape, we pre-registered a diagnostic signature, SIG-EXPLORATION: if the variance in the policy (\code{actor\_logstd\_mean}) does not collapse while the critic (\code{value\_loss}) converges low, the slide sits on the optimisation side. The signature is read from logs that already exist --- it costs no new training.\par}
 
 \subsection{Reproducibility}
 \label{sec:2.6}
@@ -144,7 +145,7 @@ The entire decision-and-evidence trail lives as an ADR chain in the version hist
 
 All five seeds in $\{6 \ldots 10\}$ climb to a peak and slide back. In form, climb-then-slide is universal --- $5/5$ --- and this is what the curves show directly (Fig.~\ref{fig:1}). But form is not the same as amplitude against a threshold. Whether the climb leg actually passes $T$ depends on which window we measure it in, and that distinction --- form versus amplitude-against-threshold --- is the whole point of what follows.
 
-\begin{figure}[h]
+\begin{figure}[!ht]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig1_climb_then_slide.pdf}
 \caption{Climb-then-slide in FORM on N=5 seeds $\{6 \ldots 10\}$. All five seeds climb to a peak and slide back (climb-then-slide in FORM = 5/5; slide-direction confirmed universal across all five seeds). Dots mark each seed's peak update. Whether the amplitude passes $T = 0.0922$ for the climb-leg depends on the \code{ep\_init} measurement window --- that distinction is the subject of Fig.~\ref{fig:3}.}
@@ -158,7 +159,7 @@ We write CTS (climb-then-slide) when we refer to whether a seed reproduced the p
 
 That is the key finding. A window change that had only hidden, or only fabricated, could be dismissed as a one-way bias one corrects for. That the same change moved two seeds into a positive result and a third out of it, simultaneously, shows that which seeds pass is governed by the measurement choice, not by the agent. The numbers shifted accordingly: $M$ against the original window was $2/5$, $M'$ against the buffer-full one was $3/5$ (Table~\ref{tab:2}).
 
-\begin{figure}[h]
+\begin{figure}[!ht]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig3_confounder_symmetric.pdf}
 \caption{Direction-symmetric \code{ep\_init}-window confounder on seeds $\{6 \ldots 10\}$ (KEY). Each arrow shows one seed's climb shifting between \code{ep\_init} windows: tail = original $[100, 150]$ window; head = revised buffer-full window. The confounder lied both ways: seeds 6 and 8 had real CTS hidden by buffer noise (green, $\times \to \checkmark$); seed 10's apparent CTS was a buffer-noise artefact (magenta, $\checkmark \to \times$). $M: 2/5 \to M': 3/5$. Marker colours are neutral by design --- the colour story here is flip direction (arrows). Fig.~\ref{fig:1}'s per-seed colours code seed identity, a separate scheme.}
@@ -170,7 +171,8 @@ That is the key finding. A window change that had only hidden, or only fabricate
 \caption{Phenomenon-reproduction count across measurement passes. Climb-then-slide reproduction count $M / M' / M''$ across the three measurement passes on the same phenomenon-question. $T = 0.0922$ (locked from the original pre-registration); the only thing that changes is the \code{ep\_init} window definition.}
 \label{tab:2}
 \small
-\begin{tabular}{@{}llllllr l@{}}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}l p{2.0cm} l p{1.7cm} p{1.8cm} c p{3.5cm}@{}}
 \toprule
 Pass & Measurement pass & Seeds & \code{ep\_init} window & Gate & Count & Reading \\
 \midrule
@@ -186,7 +188,7 @@ $M''$  & N=15 escalation             & $\{11 \ldots 20\}$ added & revised buffer
 
 \vspace{0.5em}
 
-\begin{tabular}{@{}rrrcc l@{}}
+\begin{tabular}{@{}r r r c c p{5cm}@{}}
 \toprule
 Seed & climb ($M$, $[100,150]$) & climb ($M'$, revised) & CTS $M$ & CTS $M'$ & Flip \\
 \midrule
@@ -204,7 +206,7 @@ Seed & climb ($M$, $[100,150]$) & climb ($M'$, revised) & CTS $M$ & CTS $M'$ & F
 
 On the seeds that reproduce climb-then-slide, the SIG-EXPLORATION signature holds (Fig.~\ref{fig:2}). The variance in the policy does not collapse during peak, and the critic is converged low. The slide is the optimisation side of a wide-variance policy, not a result of variance collapse. The pattern is the same on all reproducing seeds, across both measurement passes.
 
-\begin{figure}[h]
+\begin{figure}[!t]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig2_sig_exploration.pdf}
 \caption{SIG-EXPLORATION signature on seed 9 (CTS-reproducing in both measurement passes). Top panel shows the same \code{ep\_return\_mean\_recent} series as Fig.~\ref{fig:1}, zoomed in on the buffer-full eligible region (update $\geq 841$); y-axis values are identical where the x-axes overlap (e.g., seed 9 peak $= 0.2379$ at update 2102 in both figures). Variance (\code{actor\_logstd}) does not collapse during peak; critic (\code{value\_loss}) is converged low. The mechanism (SIG-EXPLORATION) holds: slide is the optimisation side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across both passes.}
@@ -218,7 +220,7 @@ In the criterion-validity reanalysis the gate passed --- $T/\sigma_\mathrm{diff}
 
 The finding sits there. Measurability itself is seed-variable: the noise scale $T$ was anchored against on one seed set does not hold on another under identical configuration. That is one level deeper than the phenomenon. We cannot decide whether climb-then-slide is robust --- not because we lack data, but because the threshold is not stably applicable across seeds.
 
-\begin{figure}[h]
+\begin{figure}[!t]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig4_noise_scale_comparison.pdf}
 \caption{Same training config, $\sim 50\%$ different median noise scale across seed-batches. Per-seed inter-update SD of \code{ep\_return\_mean\_recent} in each seed's revised buffer-full \code{ep\_init} window. Identical training config produces medians $0.024$ vs $0.036$ ($50\%$ difference) across the two seed-batches --- large enough to flip the criterion-validity gate from PASS ($2.73$) to FAIL ($1.80$) without any methodology change.}
@@ -341,6 +343,7 @@ Source-attribution correction (4 verified refs)     & \code{62bccf8} & 2026-06-0
 
 \subsection*{Reproducibility}
 
-All training runs live as \code{metrics.jsonl} + \code{agent.pt} + \code{best\_so\_far.pt} under \code{\textasciitilde/chatcat-rl-runs/} (persistent path, documented in ADR 0010 Step 1.5). The plotting script \code{paper/plot\_methods\_figures.py} regenerates Fig.~1--4 and Tables~1--2 from the same \code{metrics.jsonl} files; no new training is required to reproduce the figures. Vector export (PDF) for submission is produced by the same script.
+{\sloppy
+All training runs live as \code{metrics.jsonl} + \code{agent.pt} + \code{best\_so\_far.pt} under \code{\textasciitilde/chatcat-rl-runs/} (persistent path, documented in ADR 0010 Step 1.5). The plotting script \code{paper/plot\_methods\_figures.py} regenerates Fig.~1--4 and Tables~1--2 from the same \code{metrics.jsonl} files; no new training is required to reproduce the figures. Vector export (PDF) for submission is produced by the same script.\par}
 
 \end{document}

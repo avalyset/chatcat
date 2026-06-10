@@ -215,15 +215,10 @@ def fig1_climb_then_slide():
     ax.text(840, 0.98, " buffer fills ~here", color="#666", fontsize=8,
             ha='left', va='top', transform=ax.get_xaxis_transform())
     ax.set_xlabel("training update")
-    ax.set_ylabel(r"$\mathrm{ep\_return\_mean\_recent}$ (baseline-normalised)")
-    ax.set_title("Fig 1 — Climb-then-slide in FORM on N=5 seeds {6..10}")
+    ax.set_ylabel("return (baseline-norm.)")
+    # No printed title or bottom caption: the LaTeX \caption is the sole
+    # source of figure number and description (avoids double-marking).
     ax.legend(loc="upper right", framealpha=0.92, ncol=2, fontsize=8.5)
-    fig.text(0.02, -0.03,
-             "All five seeds climb to a peak and slide back (climb-then-slide in FORM = 5/5; slide-direction confirmed universal across all five seeds). "
-             "Dots mark each seed's peak update.\n"
-             "Whether the amplitude passes T = "
-             f"{T} for the climb-leg depends on the ep_init measurement window — that distinction is the subject of Fig 3.",
-             fontsize=8.5, color="#444", style='italic')
     out = save_both(fig, "fig1_climb_then_slide")
     plt.close(fig)
     return out
@@ -263,8 +258,8 @@ def fig2_sig_exploration():
                 label='baseline')
     ax1.axvspan(pw_lo, pw_hi, color=COL_CTS_REPRO, alpha=0.12, label='peak window')
     ax1.axvspan(iw_lo, iw_hi, color="#888", alpha=0.10, label='ep_init window')
-    ax1.set_ylabel(r"$\mathrm{ep\_return\_mean\_recent}$ (baseline-normalised)")
-    ax1.set_title(f"Fig 2 — SIG-EXPLORATION signature on seed {SEED_SHOWN} (CTS-reproducing in both measurement passes)")
+    ax1.set_ylabel("return (baseline-norm.)")
+    # No printed "Fig N" title — LaTeX \caption is the sole source.
     ax1.legend(loc="lower left", fontsize=8, framealpha=0.9)
 
     # Panel 2: actor_logstd
@@ -301,12 +296,7 @@ def fig2_sig_exploration():
                        edgecolor='#888', alpha=0.9))
     ax3.legend(loc='lower left', fontsize=8)
 
-    fig.text(0.02, -0.01,
-             "Variance (actor_logstd) does not collapse during peak; critic (value_loss) is converged low. "
-             "The mechanism (SIG-EXPLORATION) holds: slide is the optimisation\n"
-             "side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across both measurement passes.",
-             fontsize=8.5, color="#444", style='italic')
-
+    # No bottom caption: the LaTeX \caption carries the description.
     out = save_both(fig, "fig2_sig_exploration")
     plt.close(fig)
     return out
@@ -411,7 +401,7 @@ def fig3_confounder_symmetric():
     ax.set_yticks(range(n))
     ax.set_yticklabels([f"seed {d['seed']}" for d in reversed(data)], fontsize=10)
     ax.set_xlabel(r"climb = $\mathrm{ep\_peak} - \mathrm{ep\_init}$ (return units)")
-    ax.set_title("Fig 3 — Direction-symmetric ep_init-window confounder on seeds {6..10}  (KEY)")
+    # No printed "Fig N" title — LaTeX \caption is the sole source.
     ax.set_xlim(-0.35, 1.55)
     ax.set_ylim(-0.6, n - 0.3)
 
@@ -433,15 +423,8 @@ def fig3_confounder_symmetric():
               title="markers = CTS status (shape)   ·   arrows = flip direction (colour)",
               title_fontsize=8.5)
 
-    fig.text(0.02, -0.28,
-             "Each arrow shows one seed's climb shifting between ep_init windows: tail = original [100,150] "
-             "window; head = revised buffer-full window.\n"
-             "The confounder lied both ways: seeds 6 and 8 had real CTS hidden by buffer noise (green, ✗→✓); "
-             "seed 10's apparent CTS was a buffer-noise artefact (magenta, ✓→✗). M: 2/5 → M': 3/5.\n"
-             "Note: Fig 3 marker colours are neutral by design — the colour story here is flip direction (arrows). "
-             "Fig 1's per-seed colours code seed identity, a separate scheme.",
-             fontsize=8.5, color="#444", style='italic')
-
+    # No bottom caption: the LaTeX \caption carries the description and the
+    # cross-reference to Fig. 1's colour scheme (correctly numbered there).
     out = save_both(fig, "fig3_confounder_symmetric")
     plt.close(fig)
     return out
@@ -504,18 +487,12 @@ def fig4_noise_scale_comparison():
     ax.set_xticks(x_orig + x_esc)
     ax.set_xticklabels([str(s) for s in ORIGINAL_SEEDS + ESCALATION_SEEDS])
     ax.set_xlabel("seed")
-    ax.set_ylabel(r"inter-update-SD of $\mathrm{ep\_return\_mean\_recent}$ in revised window")
-    ax.set_title("Fig 4 — Same training config, ~50% different median noise scale across seed-batches")
+    ax.set_ylabel("inter-update SD (revised window)")
+    # No printed "Fig N" title — LaTeX \caption is the sole source.
     ax.set_xlim(-0.7, x_esc[-1] + 4.5)
     ax.legend(loc='upper right', fontsize=8.5, framealpha=0.92)
 
-    fig.text(0.02, -0.03,
-             "Per-seed inter-update-SD of ep_return_mean_recent in each seed's revised buffer-full ep_init window. "
-             "Identical training config produces medians 0.024 vs 0.036\n"
-             "(50% difference) across the two seed-batches — large enough to flip the criterion-validity gate "
-             "from PASS (2.73) to FAIL (1.80) without any methodology change.",
-             fontsize=8.5, color="#444", style='italic')
-
+    # No bottom caption: the LaTeX \caption carries the description.
     out = save_both(fig, "fig4_noise_scale_comparison")
     plt.close(fig)
     return out
