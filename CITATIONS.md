@@ -172,8 +172,8 @@ the CatMeows dataset and from the 2020 human-classification paper.
 
 ## 14. MeowTalk overreach (popular-press source)
 
-**Anthes, E.** Did My Cat Just Hit On Me? An Adventure in Pet Translation.
-*The New York Times*.
+**Anthes, E. (2022).** Did My Cat Just Hit On Me? An Adventure in Pet
+Translation. *The New York Times*, 29 August 2022.
 
 **Used in:** `README.md` (the "It's not pure science at this stage" quote).
 Anthes attributes the "not pure science at this stage" admission to one of
