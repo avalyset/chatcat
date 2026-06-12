@@ -11,13 +11,7 @@
   export at venue-tilpasning, and plot script will be updated then.
 -->
 
-# [PLACEHOLDER — tittel: Eirik bekrefter]
-
-<!-- Eirik: foreslått arbeids-tittel kan være noe som "Criterion-validity gating
-     in pre-registered RL evaluation: a negative result we could trust" eller
-     "When measurability is seed-variable: a pre-registration discipline for
-     RL evaluation under noise-dominated thresholds" — endelig tittel velges
-     ved venue-tilpasning. -->
+# A Criterion-Validity Gate for Threshold-Based Reproducibility Assessment in RL
 
 **[PLACEHOLDER — forfatter-blokk: Eirik bekrefter]**
 
@@ -32,7 +26,7 @@ EcoDeco AS
 
 RL-agenter evalueres mot terskler som sjelden valideres mot støyen i sitt eget måle-vindu. En terskel kan være meningsfull mot utfalls-spennet og samtidig støy-dominert i vinduet den faktisk anvendes i — og da er et tilsynelatende rent resultat en måle-artefakt. Hvilke seeds som passerer er nær et myntkast, presentert som funn.
 
-Vi pre-registrerte en evaluering av en RL-agent mot en etologisk simulator i en ACI-kontekst (animal-computer interaction), og innførte en kriterie-validitet-gate: en sjekk, registrert sammen med metoden, som verifiserer at terskelen er adskillbar fra støyen i sitt anvendelsesvindu før den anvendes. Gaten endret utfallet i tre dokumenterte tilfeller. Et climb-ledd var målt mot et vindu der støyen lå rundt 10× terskelen — en inkonsistens vi selv hadde bygd inn. Måle-vinduet viste seg direksjons-symmetrisk: det skjulte det observerte fenomenet på noen seeds og fabrikkerte det på andre. Og ved escalering feilet gaten på et nytt seed-utvalg fordi noise-skalaen var rundt 50% høyere ved identisk konfig.
+Vi pre-registrerte en evaluering av en RL-agent mot en etologisk simulator i en ACI-kontekst (animal-computer interaction), og innførte en kriterie-validitet-gate: en sjekk, registrert sammen med metoden, som verifiserer at terskelen er adskillbar fra støyen i sitt anvendelsesvindu før den anvendes. Gaten endret utfallet i tre dokumenterte tilfeller. Et climb-ledd var målt mot et vindu der støyen lå rundt 10× terskelen — en inkonsistens vi selv hadde bygd inn. Måle-vinduet viste seg direksjons-symmetrisk: det skjulte det observerte fenomenet på noen seeds og fabrikkerte det på andre. Og ved eskalering feilet gaten på et friskt seed-trekk — ikke fordi den batchen var støyere, men fordi selve verdiktet avhenger av hvilke seeds som trekkes: ~50%-spriket i median-støy som ser ut som en skala-forskjell, er seed-wander over støy-gulvet, ikke en reell forskjell.
 
 Det siste er poenget. Fenomenet kunne ikke avgjøres som robust eller ikke-robust på oppnåelig compute — ikke av datamangel, men fordi målbarheten selv er seed-variabel, på et nivå dypere enn fenomenet. Bidraget er metoden som gjorde den nektelsen pre-registrert og synlig i stedet for å produsere et falskt rent tall. I felt der overpåstand er den dokumenterte feilmoden, er gate-beskyttet pre-registrert evaluering infrastruktur for ærlig agent-vurdering.
 
@@ -274,7 +268,6 @@ Devlog-entryer i `docs/observations/` gir tids-stempel og kort prosa for ADR 000
   ASSEMBLY NOTES — BEVISST KOMMENTAR I KILDEFILEN, IKKE COMMITTET INNHOLD
 
   Plassholdere (Eirik må bekrefte før låsing):
-  - Tittel
   - Forfatter-blokk (Eirik Botten Nicolaysen / EcoDeco AS — bekreft affiliasjon,
     e-post, evt. ORCID, evt. medforfattere)
 

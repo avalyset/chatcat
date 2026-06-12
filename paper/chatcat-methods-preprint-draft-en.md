@@ -1,6 +1,6 @@
 <!--
-  English assembly of the methods paper for arXiv submission (cs.LG primary,
-  cs.AI secondary). Translated from paper/sections/*.md (Norwegian canonical
+  English assembly of the methods paper for arXiv submission (cs.LG only).
+  Translated from paper/sections/*.md (Norwegian canonical
   source); §1.1 is a freshly composed English version (not a translation)
   per the framing decision. All locked numbers preserved verbatim:
   T = 0.0922, K = 0.004986, ratios 2.73 / 1.80, noise medians 0.0362 /
@@ -8,12 +8,7 @@
   M = 2/5, M' = 3/5. Source-of-truth verification gate run before commit.
 -->
 
-# [PLACEHOLDER — title: Eirik to confirm]
-
-<!-- Eirik: working-title candidates for arXiv (cs.LG):
-     - "A criterion-validity gate for noise-dominated reproducibility thresholds in RL evaluation"
-     - "Pre-registration is not enough: gating thresholds against application-window noise"
-     - Final title to be set at arXiv submission. -->
+# A Criterion-Validity Gate for Threshold-Based Reproducibility Assessment in RL
 
 **[PLACEHOLDER — author block: Eirik to confirm]**
 
@@ -28,7 +23,7 @@ EcoDeco AS
 
 RL agents are evaluated against thresholds that are rarely validated against the noise inside their own measurement window. A threshold can be meaningful against the outcome span and at the same time noise-dominated in the window where it is actually applied — and when that happens, an apparently clean result is a measurement artefact. Which seeds pass is closer to a coin flip than to a finding.
 
-We pre-registered an evaluation of an RL agent against an ethological simulator in an ACI (animal-computer interaction) context, and introduced a criterion-validity gate: a check, registered together with the methodology, that verifies the threshold is separable from the noise in its application window before it is applied. The gate changed the outcome in three documented cases. A climb-leg was being measured against a window where the noise sat at roughly 10× the threshold — an inconsistency we had built in ourselves. The measurement window turned out to be direction-symmetric: it hid the observed phenomenon on some seeds and fabricated it on others. And on escalation, the gate failed on a fresh seed batch because the noise scale was roughly 50% higher under identical configuration.
+We pre-registered an evaluation of an RL agent against an ethological simulator in an ACI (animal-computer interaction) context, and introduced a criterion-validity gate: a check, registered together with the methodology, that verifies the threshold is separable from the noise in its application window before it is applied. The gate changed the outcome in three documented cases. A climb-leg was being measured against a window where the noise sat at roughly 10× the threshold — an inconsistency we had built in ourselves. The measurement window turned out to be direction-symmetric: it hid the observed phenomenon on some seeds and fabricated it on others. And on escalation, the gate failed on a fresh seed draw — not because that batch was noisier, but because the verdict itself depends on which seeds are drawn: the ~50% gap in median noise that looks like a scale difference is seed-wander across the noise floor, not a real one.
 
 The last result is the point. The phenomenon could not be decided as robust or not-robust on attainable compute — not for lack of data, but because measurability itself is seed-variable, at a level deeper than the phenomenon. The contribution is the method that made that refusal pre-registered and visible instead of producing a false clean number. Wherever a reproducibility threshold risks sitting inside the noise of the window it is applied to — a common case in RL evaluation — gate-protected pre-registration is the infrastructure that lets pre-registration deliver what it promises: honest assessment instead of clean-looking artefacts.
 
@@ -282,7 +277,6 @@ Devlog entries in `docs/observations/` provide a timestamp and short prose for A
   - All other prose is faithful NO→EN translation with no re-framing.
 
   Placeholders (Eirik to confirm before submission):
-  - Title
   - Author block (affiliation, email, ORCID, possible co-authors)
   - Anthes (NYT) publication year — verified as 2022 (29 August 2022) and
     filled in both the references list and the §1.1 in-text citation; the
@@ -304,7 +298,7 @@ Devlog entries in `docs/observations/` provide a timestamp and short prose for A
   - Figure regeneration with updated plot script (ep_return_mean_recent ylabel
     on Fig 2 ax1, dejargonized internal captions) for vector PDF/SVG export
   - LaTeX conversion (arXiv accepts .tex; markdown source kept as working draft)
-  - arXiv classification: cs.LG primary, cs.AI secondary
+  - arXiv classification: cs.LG only (no secondary cross-list)
   - External ACI-audience reading
 
   Verified at assembly time:
