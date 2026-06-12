@@ -67,9 +67,10 @@ If local compilation fails:
 - [ ] Upload as a `.zip` or `.tar.gz` bundle:
   ```bash
   cd /Users/eirikbottennicolaysen/ClaudeWork/chatcat/paper/arxiv
-  tar -czf arxiv-submission.tar.gz chatcat-methods.tex refs.bib figures/
+  tar -czf chatcat-methods-arxiv-submission.tar.gz chatcat-methods.tex refs.bib chatcat-methods.bbl figures/
   ```
-- [ ] Alternative: upload individual files via web form (in this order: .tex, .bib, then figures)
+  Note: ship `chatcat-methods.bbl` deliberately — arXiv does not reliably re-run bibtex, and a missing `.bbl` is the most common submission failure. The verified bundle (built+tested this session) is committed at `paper/arxiv/chatcat-methods-arxiv-submission.tar.gz`.
+- [ ] Alternative: upload individual files via web form (in this order: .tex, .bib, .bbl, then figures)
 - [ ] arXiv will queue for compilation; check the "Processing" status
 - [ ] When compilation finishes, **review the arXiv-generated PDF carefully** — this is what readers will see
 - [ ] Fix any compilation errors and re-upload until clean
