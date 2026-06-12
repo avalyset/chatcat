@@ -23,7 +23,3 @@ We report three cases in which the gate changed the outcome. None are hypothetic
 ### 1.4
 
 The paper delimits what it claims. It does not claim that the phenomenon we observed — climb-then-slide, where the agent reaches baseline and does not hold it — is solved. It claims no fix; warm-start, KL-anchoring, and reward-reshaping are all unchosen and lie downstream. It does not claim the simulator is realistic; the sim-to-real gap is undocumented until v0.4, and we note this explicitly. The diagnosis we made — that the slide sits on the optimisation side, not in the reward landscape — is diagnosis, not fix, and is presented as such.
-
-### 1.5
-
-

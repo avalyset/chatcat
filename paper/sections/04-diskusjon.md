@@ -12,12 +12,6 @@ Uten gaten ville kriterie-validitet-reanalysens M' = 3/5 blitt rapportert som et
 
 Simulatoren er ikke virkelighetstro; sim-to-real-gapet er udokumentert til v0.4. Resultatene gjelder agent-evaluering i simulator, ikke kattatferd, og vi hevder ikke annet. N=15 er lite — men det er nettopp poenget. Mer N løser ikke problemet når målbarheten selv er seed-variabel, og det er grunnen til at midtbåndet ble pre-registrert som et sluttpunkt heller enn et sted å hente flere kjøringer fra. Diagnosen er diagnose, ikke fiks: vi peker på at sliden er optimaliserings-side, vi løser den ikke. Warm-start, KL-anker og reward-reshaping er alle ikke-valgte og ligger nedstrøms.
 
-
-
-
-
-
-
-
+### 4.4 Avslutning
 
 Det vi tilbyr feltet er ikke et svar på climb-then-slide. Det er en metode som nektet å gi et falskt svar, og et eksplisitt spor av hvorfor nektelsen var den riktige vitenskapelige handlingen. I et felt der overpåstand er den dokumenterte feilmoden, er evaluerings-infrastruktur som kan si «dette kan ikke avgjøres ennå, og her er hvorfor» en forutsetning for å ikke bli det man kritiserer.

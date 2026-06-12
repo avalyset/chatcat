@@ -49,16 +49,16 @@ Note: arXiv abstract field accepts plain text only (no LaTeX commands except `\(
 
 **Justification:** The paper's contribution is a methodological gate for RL evaluation — a check that verifies thresholds are separable from noise in their application window. The empirical content is RL training (PPO over a continuous action space) and the analysis is reproducibility-threshold methodology. Fits cs.LG's scope of "all aspects of machine learning research."
 
+### Secondary: none
 
+**cs.LG-only (decided).** No secondary cross-list. The paper's contribution is an RL-evaluation method (criterion-validity gate, seed-variability, noise-separation) — cs.LG at its core. cs.AI was previously listed as a secondary, but its justification rested on a broader cross-domain methodology framing that has been removed from the paper (a deliberately-unopened direction; see the compartmentalization scrub). Keeping a cs.AI cross-list on the remaining thinner rationale would stretch the classification toward an audience the paper no longer addresses. Plain cs.LG matches what the paper actually is.
 
+### Optional cross-list considerations:
 
+- `stat.ML` (Statistics — Machine Learning): the gate's mathematical formulation (T / σ√2 ≥ ~2) is statistical reasoning about measurement noise. Could fit if a cross-list is later wanted; not taken here.
+- `cs.HC` (Human-Computer Interaction): the ACI/Cat Royale framing in §1.1. Too narrow given the paper's content; not recommended.
 
-
-
-
-
-
-
+Recommended: **cs.LG only** (primary), no secondary cross-list.
 
 ---
 

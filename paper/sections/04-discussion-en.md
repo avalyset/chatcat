@@ -12,12 +12,6 @@ Without the gate, the criterion-validity reanalysis's M' = 3/5 would have been r
 
 The simulator is not realistic; the sim-to-real gap is undocumented until v0.4. The results apply to agent evaluation in simulator, not cat behaviour, and we claim nothing else. N=15 is small — but that is precisely the point. More N does not solve the problem when measurability itself is seed-variable, and that is why the middle band was pre-registered as an endpoint rather than a place to draw more runs from. The diagnosis is diagnosis, not fix: we point out that the slide is on the optimisation side, we do not solve it. Warm-start, KL-anchoring, and reward-reshaping are all unchosen and lie downstream.
 
-
-
-
-
-
-
-
+### 4.4 Closing
 
 What we offer the field is not an answer to climb-then-slide. It is a method that refused to give a false answer, and an explicit trail of why that refusal was the right scientific action. In a field where overclaiming is the documented failure mode, evaluation infrastructure that can say "this cannot be decided yet, and here is why" is a precondition for not becoming what one criticises.

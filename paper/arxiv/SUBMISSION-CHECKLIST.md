@@ -60,7 +60,7 @@ If local compilation fails:
 - [ ] At `https://arxiv.org/submit`, click "Start new submission"
 - [ ] License: select **CC BY 4.0** (per metadata recommendation) — or arXiv non-exclusive default if Eirik prefers
 - [ ] Archive: **cs** (Computer Science)
-
+- [ ] Subject class: **cs.LG** (primary), no secondary cross-list (cs.LG-only — see submission-metadata.md)
 
 ### 4. Upload files
 

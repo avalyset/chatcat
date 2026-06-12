@@ -60,10 +60,6 @@ We report three cases in which the gate changed the outcome. None are hypothetic
 
 The paper delimits what it claims. It does not claim that the phenomenon we observed — climb-then-slide, where the agent reaches baseline and does not hold it — is solved. It claims no fix; warm-start, KL-anchoring, and reward-reshaping are all unchosen and lie downstream. It does not claim the simulator is realistic; the sim-to-real gap is undocumented until v0.4, and we note this explicitly. The diagnosis we made — that the slide sits on the optimisation side, not in the reward landscape — is diagnosis, not fix, and is presented as such.
 
-### 1.5
-
-
-
 ---
 
 ## 2 Methods
@@ -210,13 +206,7 @@ Without the gate, the criterion-validity reanalysis's M' = 3/5 would have been r
 
 The simulator is not realistic; the sim-to-real gap is undocumented until v0.4. The results apply to agent evaluation in simulator, not cat behaviour, and we claim nothing else. N=15 is small — but that is precisely the point. More N does not solve the problem when measurability itself is seed-variable, and that is why the middle band was pre-registered as an endpoint rather than a place to draw more runs from. The diagnosis is diagnosis, not fix: we point out that the slide is on the optimisation side, we do not solve it. Warm-start, KL-anchoring, and reward-reshaping are all unchosen and lie downstream.
 
-
-
-
-
-
-
-
+### 4.4 Closing
 
 What we offer the field is not an answer to climb-then-slide. It is a method that refused to give a false answer, and an explicit trail of why that refusal was the right scientific action. In a field where overclaiming is the documented failure mode, evaluation infrastructure that can say "this cannot be decided yet, and here is why" is a precondition for not becoming what one criticises.
 

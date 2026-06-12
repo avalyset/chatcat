@@ -23,7 +23,3 @@ Vi rapporterer tre tilfeller der gaten endret utfallet. Ingen av dem er hypoteti
 ### 1.4
 
 Papiret avgrenser hva det påstår. Det påstår ikke at fenomenet vi observerte — climb-then-slide, der agenten når baseline og ikke holder den — er løst. Det påstår ingen fiks; warm-start, KL-anker og reward-reshaping er alle ikke-valgt og ligger nedstrøms. Det påstår ikke at simulatoren er virkelighetstro; sim-to-real-gapet er udokumentert til v0.4, og vi noterer det eksplisitt. Diagnosen vi gjorde — at sliden ligger på optimaliserings-siden, ikke i reward-landskapet — er diagnose, ikke fiks, og presenteres som det.
-
-### 1.5
-
-
