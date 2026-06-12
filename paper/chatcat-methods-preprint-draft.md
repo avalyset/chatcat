@@ -154,13 +154,9 @@ På de seedene som reproduserer climb-then-slide holder SIG-EXPLORATION-signatur
 
 ### 3.4 Gaten passerte, så feilet
 
-I kriterie-validitet-reanalysen passerte gaten — T/σ_diff = 2.73 — og M' landet på 3/5. Borderline, og inkonklusivt på fem seeds. N=15-escaleringen la til ti nye seeds, {11..20}, for N=15. Der feilet gaten: T/σ_diff = 1.80. Den samme treningskonfigen produserte rundt 50% høyere median noise-skala på det nye seed-settet, 0.0362 mot 0.0239 (Fig 4, Tabell 1). Stopp-regelen ble utløst før M'' ble talt.
+I kriterie-validitet-reanalysen passerte gaten — T/σ_diff = 2.73 — og M' landet på 3/5. Borderline, og inkonklusivt på fem seeds. N=15-escaleringen la til ti nye seeds, {11..20}, for N=15. Der feilet gaten: T/σ_diff = 1.80. Den samme treningskonfigen produserte rundt 50% høyere median noise-skala på det nye seed-settet, 0.0362 mot 0.0239 (Tabell 1). Stopp-regelen ble utløst før M'' ble talt.
 
 Funnet ligger der. Målbarheten selv er seed-variabel: noise-skalaen T ble forankret mot på ett seed-sett gjelder ikke på et annet ved identisk konfig. Det er et nivå dypere enn fenomenet. Vi kan ikke avgjøre om climb-then-slide er robust — ikke fordi vi mangler data, men fordi terskelen ikke er stabilt anvendbar på tvers av seeds.
-
-![Fig 4 — Same training config, ~50% different median noise scale across seed-batches](figures/fig4_noise_scale_comparison.png)
-
-*Fig 4 — Same training config, ~50% different median noise scale across seed-batches. Per-seed inter-update-SD of ep_return_mean_recent in each seed's revised buffer-full ep_init window. Identical training config produces medians 0.024 vs 0.036 (50% difference) across the two seed-batches — large enough to flip the kriterie-validitet-gate from PASS (2.73) to FAIL (1.80) without any methodology change.*
 
 **Tabell 1 — Kriterie-validitet-gate: criterion-validity reanalysis PASS vs N=15 escalation FAIL.** Per-seed inter-update-SD of `ep_return_mean_recent` over each seed's revised buffer-full ep_init-window (first 51 updates with `ep_return_n_recent ≥ 100`). Gate fires if `T / (σ_median × √2) ≥ ~2`.
 
@@ -193,6 +189,20 @@ Funnet ligger der. Målbarheten selv er seed-variabel: noise-skalaen T ble foran
 | Gate decision (threshold ≥ ~2) | **PASS** | **FAIL** |
 
 T = 0.0922 (locked since commit `0140536`). Gaten ble utløst i motsatte retninger på de to batchene tross identisk treningskonfigurasjon — bevis på at gaten ikke er en formalitet og at same-config noise-skala selv er substansiell.
+
+### 3.5 Gate-verdiktet er selv seed-variabelt
+
+FAIL-en var et slice-utfall. N=15-escaleringen regnet sin FAIL — T/σ_diff = 1.80 — på de ti nye seedene {11..20}. Men verdiktet avhenger av hvilke seeds som trekkes: full-settet {6..20} gir T/σ_diff = 2.1459 — så vidt PASS. Samme korpus, ulik slice, motsatt verdikt.
+
+Verdikt-stabilitets-resamplingen pre-registrerte dette som et spørsmål og målte det. Resampling over de femten seedene — uttømmende choose-k for k=5 og k=10, fullsettet for k=15 — gir fordelingen til selve gate-verdiktet. Ved k=5 er PASS-raten 0.5734, et myntkast; ved k=10 er den 0.7063. Fordelingen ligger sentrert rett over terskelen — k=5 median-ratio 2.146 — men 43% av trekkene faller under 2.0. Verdiktet landet i det pre-registrerte midtbåndet [0.20, 0.80): gate-verdiktet er intrinsisk seed-variabelt.
+
+Mekanismen er ikke den §3.4 antydet — og resamplingen korrigerer den. En Brown-Forsythe-test på {6..10} mot {11..20} gir W = 0.000159, p = 0.99: det finnes ingen påvisbar skala-forskjell mellom batchene. Den tilsynelatende ~50%-forskjellen i median-støy (0.0239 mot 0.0362) er ikke en støyere andre-batch. Det er seed-wander over støy-gulvet σ* = T/(2√2) = 0.0326. Populasjonen straddler gulvet, så medianens posisjon — og med den verdiktet — avhenger av trekket, ikke av batchen. Der §3.4 leste de to seed-settene som genuint forskjellige, er de ett sett som straddler et felles gulv.
+
+Dette er sluttpunktet resamplingen navnga på forhånd, nå realisert — the earned, quantified form of "measurability is seed-variable": a real endpoint, not a call for more compute.
+
+![Fig 4 — Distribution of the gate-verdict ratio across the fifteen seeds (k=5 resampling)](figures/fig4_gate_ratio_distribution.png)
+
+*Fig 4 — Distribution of the gate-verdict ratio T/σ_diff across the fifteen seeds (k=5 resampling, all 3003 draws), with the threshold at 2.0 marked. The distribution straddles the threshold: PASS rate 0.5734, median ratio 2.146, with 43% of draws below 2.0. A Brown-Forsythe test (p = 0.99) shows that the apparent difference in median noise between seed batches is not a real scale difference — the verdict depends on which seeds are drawn, not on the batch.*
 
 ---
 
@@ -244,6 +254,9 @@ Hele evalueringens beslutnings- og evidens-spor ligger committed på `origin/mai
 | **ADR 0012 — escalation til N=15** | | | |
 | Stub (N=15 + tre-veis suksess + midtbånd-disiplin) | `3e45ac7` | 2026-06-05 | Seeds {11..20}, midtbånd som sluttpunkt |
 | Resolution (gate FAIL, M'' ikke talt) | `7e4dbd9` | 2026-06-06 | T/σ_diff = 1.8027 FAIL; ~50 % noise-skala-diskrepans |
+| **ADR 0013 — verdikt-stabilitets-resampling** | | | |
+| Stub (resampling pre-registrert, beslutnings-bånd låst) | `a14ca78` | 2026-06-12 | Uttømmende choose-k over de 15 seedene; tre-veis PASS-rate-bånd låst før fordelingen ble lest |
+| Resolution (midtbånd: verdikt seed-variabelt) | `705ea71` | 2026-06-12 | k=5 PASS-rate 0.5734 ∈ [0.20, 0.80); Brown-Forsythe p = 0.99 — seed-wander, ikke en støyere batch |
 | **Støtte-commits** | | | |
 | Instrumentering (`actor_logstd`-logging + checkpoint-on-best) | `cd5def3` | 2026-06-04 | `metrics.jsonl`-skjema utvidet for SIG-EXPLORATION-lesning |
 | Figurer + plotting-script | `e05300b` | 2026-06-06 | Fig 1–4 + Tabell 1–2 reproduserbart fra metrics.jsonl |
@@ -251,7 +264,7 @@ Hele evalueringens beslutnings- og evidens-spor ligger committed på `origin/mai
 
 ### Reproduserbarhet
 
-Alle treningskjøringer ligger som `metrics.jsonl` + `agent.pt` + `best_so_far.pt` på `~/chatcat-rl-runs/` (persistent path, dokumentert i ADR 0010 Step 1.5). Plotting-scriptet `paper/plot_methods_figures.py` regenererer Fig 1–4 og Tabell 1–2 fra de samme `metrics.jsonl`-filene; ingen ny trening kreves for å reprodusere figurene. Vector-eksport (PDF/SVG) for submission kan produseres ved å endre `savefig`-utvidelsen i scriptet.
+Alle treningskjøringer ligger som `metrics.jsonl` + `agent.pt` + `best_so_far.pt` på `~/chatcat-rl-runs/` (persistent path, dokumentert i ADR 0010 Step 1.5). Plotting-scriptet `paper/plot_methods_figures.py` regenererer Fig 1–3 og Tabell 1–2 fra de samme `metrics.jsonl`-filene; ingen ny trening kreves. Fig 4 regenereres fra det committede artefaktet `paper/analysis/gate_ratio_distribution_k5.csv` — den uttømmende k=5 gate-verdikt-fordelingen produsert av `paper/analysis/gate_distribution.py` fra den frosne `seed_summary_frozen.csv` — så verdikt-stabilitets-figuren er reproduserbar fra committed substrat, ikke fra en flyktig kjøring. Vector-eksport (PDF/SVG) for submission kan produseres ved å endre `savefig`-utvidelsen i scriptet.
 
 Devlog-entryer i `docs/observations/` gir tids-stempel og kort prosa for ADR 0008/0009/0010 i forfatterens egen stemme; de er ikke evidens-grunnlag for papiret, men gir konteksten for hver ADR-beslutnings-fase.
 

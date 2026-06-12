@@ -211,16 +211,9 @@ On the seeds that reproduce climb-then-slide, the SIG-EXPLORATION signature hold
 \subsection{The gate passed, then failed}
 \label{sec:3.4}
 
-In the criterion-validity reanalysis the gate passed --- $T/\sigma_\mathrm{diff} = 2.73$ --- and $M'$ landed at $3/5$. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, $\{11 \ldots 20\}$, for N=15. There the gate failed: $T/\sigma_\mathrm{diff} = 1.80$. The same training configuration produced a median noise scale roughly $50\%$ higher on the new seed set, $0.0362$ against $0.0239$ (Fig.~\ref{fig:4}, Table~\ref{tab:1}). The stop rule was triggered before $M''$ was tallied.
+In the criterion-validity reanalysis the gate passed --- $T/\sigma_\mathrm{diff} = 2.73$ --- and $M'$ landed at $3/5$. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, $\{11 \ldots 20\}$, for N=15. There the gate failed: $T/\sigma_\mathrm{diff} = 1.80$. The same training configuration produced a median noise scale roughly $50\%$ higher on the new seed set, $0.0362$ against $0.0239$ (Table~\ref{tab:1}). The stop rule was triggered before $M''$ was tallied.
 
 The finding sits there. Measurability itself is seed-variable: the noise scale $T$ was anchored against on one seed set does not hold on another under identical configuration. That is one level deeper than the phenomenon. We cannot decide whether climb-then-slide is robust --- not because we lack data, but because the threshold is not stably applicable across seeds.
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig4_noise_scale_comparison.pdf}
-\caption{Same training config, $\sim 50\%$ different median noise scale across seed-batches. Per-seed inter-update SD of \code{ep\_return\_mean\_recent} in each seed's revised buffer-full \code{ep\_init} window. Identical training config produces medians $0.024$ vs $0.036$ ($50\%$ difference) across the two seed-batches --- large enough to flip the criterion-validity gate from PASS ($2.73$) to FAIL ($1.80$) without any methodology change.}
-\label{fig:4}
-\end{figure}
 
 \begin{table}[h]
 \centering
@@ -272,6 +265,24 @@ Gate decision (threshold $\geq \sim 2$) & \textbf{PASS} & \textbf{FAIL} \\
 \small $T = 0.0922$ (locked since commit \code{0140536}). The gate was triggered in opposite directions on the two batches despite identical training configuration --- evidence that the gate is not a formality and that same-config noise scale is itself substantial.
 \end{table}
 
+\subsection{The gate verdict is itself seed-variable}
+\label{sec:3.5}
+
+The FAIL was a slice outcome. The N=15 escalation computed its FAIL --- $T/\sigma_\mathrm{diff} = 1.80$ --- on the ten new seeds $\{11 \ldots 20\}$. But the verdict depends on which seeds are drawn: the full set $\{6 \ldots 20\}$ gives $T/\sigma_\mathrm{diff} = 2.1459$ --- a bare PASS. Same corpus, different slice, opposite verdict.
+
+The verdict-stability resampling pre-registered this as a question and measured it. Resampling across the fifteen seeds --- exhaustive choose-k for $k=5$ and $k=10$, the full set for $k=15$ --- yields the distribution of the gate verdict itself (Fig.~\ref{fig:4}). At $k=5$ the PASS rate is $0.5734$, a coin flip; at $k=10$ it is $0.7063$. The distribution sits centered just above the threshold --- $k=5$ median ratio $2.146$ --- yet $43\%$ of draws fall below $2.0$. The verdict landed in the pre-registered mid-band $[0.20, 0.80)$: the gate verdict is intrinsically seed-variable.
+
+The mechanism is not the one Section~\ref{sec:3.4} implied --- and the resampling corrects it. A Brown-Forsythe test on $\{6 \ldots 10\}$ against $\{11 \ldots 20\}$ gives $W = 0.000159$, $p = 0.99$: there is no detectable scale difference between the batches. The apparent $\sim 50\%$ gap in median noise ($0.0239$ against $0.0362$) is not a noisier second batch. It is seed-wander across the noise floor $\sigma^* = T/(2\sqrt{2}) = 0.0326$. The population straddles the floor, so the median's position --- and with it the verdict --- depends on the draw, not on the batch. Where Section~\ref{sec:3.4} read the two seed sets as genuinely different, they are one set straddling a common floor.
+
+This is the endpoint the resampling named in advance, now realized --- the earned, quantified form of ``measurability is seed-variable'': a real endpoint, not a call for more compute.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig4_gate_ratio_distribution.pdf}
+\caption{Distribution of the gate-verdict ratio $T/\sigma_\mathrm{diff}$ across the fifteen seeds ($k=5$ resampling, all $3003$ draws), with the threshold at $2.0$ marked. The distribution straddles the threshold: PASS rate $0.5734$, median ratio $2.146$, with $43\%$ of draws below $2.0$. A Brown-Forsythe test ($p = 0.99$) shows that the apparent difference in median noise between seed batches is not a real scale difference --- the verdict depends on which seeds are drawn, not on the batch.}
+\label{fig:4}
+\end{figure}
+
 \section{Discussion}
 
 \subsection{What the result actually is}
@@ -302,7 +313,7 @@ What we offer the field is not an answer to climb-then-slide. It is a method tha
 \section{The ADR chain as a reproducible evidence trail}
 \label{app:A}
 
-The entire decision-and-evidence trail for the evaluation lives committed on the project's \code{origin/main}. Every claim in Section~\ref{sec:1.3}--Section~\ref{sec:3.4} (results, anchoring seed, gate, falsification structure) points to one of these commits as the lock for the assumption it rests on. Stub commits locked the methodology before data; resolution commits reported the outcome against the already-frozen methodology. ADR numbers are retained in this appendix as a cross-reference index; the main text above uses semantic descriptions (``the original pre-registration'', ``the criterion-validity reanalysis'', ``the N=15 escalation'').
+The entire decision-and-evidence trail for the evaluation lives committed on the project's \code{origin/main}. Every claim in Section~\ref{sec:1.3}--Section~\ref{sec:3.5} (results, anchoring seed, gate, falsification structure, verdict-stability resampling) points to one of these commits as the lock for the assumption it rests on. Stub commits locked the methodology before data; resolution commits reported the outcome against the already-frozen methodology. ADR numbers are retained in this appendix as a cross-reference index; the main text above uses semantic descriptions (``the original pre-registration'', ``the criterion-validity reanalysis'', ``the N=15 escalation'').
 
 \begin{table}[h]
 \centering
@@ -321,6 +332,9 @@ Resolution (reanalysis, gate PASS, $M' = 3/5$)      & \code{8e977f1} & 2026-06-0
 \multicolumn{4}{l}{\textbf{ADR 0012 --- escalation to N=15}} \\
 Stub (N=15 + three-way success + middle-band discipline) & \code{3e45ac7} & 2026-06-05 & Seeds $\{11 \ldots 20\}$, middle band as endpoint \\
 Resolution (gate FAIL, $M''$ not tallied)           & \code{7e4dbd9} & 2026-06-06 & $T/\sigma_\mathrm{diff} = 1.8027$ FAIL; $\sim 50\%$ noise-scale discrepancy \\
+\multicolumn{4}{l}{\textbf{ADR 0013 --- verdict-stability resampling}} \\
+Stub (resampling pre-registered, decision bands locked) & \code{a14ca78} & 2026-06-12 & Exhaustive choose-k over the 15 seeds; three-way PASS-rate bands locked before the distribution was read \\
+Resolution (mid-band: verdict seed-variable)        & \code{705ea71} & 2026-06-12 & $k=5$ PASS-rate $0.5734 \in [0.20, 0.80)$; Brown-Forsythe $p = 0.99$ --- seed-wander, not a noisier batch \\
 \multicolumn{4}{l}{\textbf{Supporting commits}} \\
 Instrumentation (\code{actor\_logstd} logging + checkpoint-on-best) & \code{cd5def3} & 2026-06-04 & \code{metrics.jsonl} schema extended for SIG-EXPLORATION reading \\
 Figures + plotting script                           & \code{e05300b} & 2026-06-06 & Fig.~1--4 + Table~1--2 reproducible from \code{metrics.jsonl} \\
@@ -332,6 +346,6 @@ Source-attribution correction (4 verified refs)     & \code{62bccf8} & 2026-06-0
 \subsection*{Reproducibility}
 
 {\sloppy
-All training runs live as \code{metrics.jsonl} + \code{agent.pt} + \code{best\_so\_far.pt} under \code{\textasciitilde/chatcat-rl-runs/} (persistent path, documented in ADR 0010 Step 1.5). The plotting script \code{paper/plot\_methods\_figures.py} regenerates Fig.~1--4 and Tables~1--2 from the same \code{metrics.jsonl} files; no new training is required to reproduce the figures. Vector export (PDF) for submission is produced by the same script.\par}
+All training runs live as \code{metrics.jsonl} + \code{agent.pt} + \code{best\_so\_far.pt} under \code{\textasciitilde/chatcat-rl-runs/} (persistent path, documented in ADR 0010 Step 1.5). The plotting script \code{paper/plot\_methods\_figures.py} regenerates Fig.~1--3 and Tables~1--2 from the same \code{metrics.jsonl} files; no new training is required. Fig.~4 is regenerated from the committed artefact \code{paper/analysis/gate\_ratio\_distribution\_k5.csv} --- the exhaustive $k=5$ gate-verdict distribution produced by \code{paper/analysis/gate\_distribution.py} from the frozen \code{seed\_summary\_frozen.csv} --- so the verdict-stability figure is reproducible from committed substrate, not from a transient run. Vector export (PDF) for submission is produced by the same script.\par}
 
 \end{document}

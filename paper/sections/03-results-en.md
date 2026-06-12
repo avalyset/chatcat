@@ -16,6 +16,16 @@ On the seeds that reproduce climb-then-slide, the SIG-EXPLORATION signature hold
 
 ### 3.4 The gate passed, then failed
 
-In the criterion-validity reanalysis the gate passed — T/σ_diff = 2.73 — and M' landed at 3/5. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, {11..20}, for N=15. There the gate failed: T/σ_diff = 1.80. The same training configuration produced a median noise scale roughly 50% higher on the new seed set, 0.0362 against 0.0239 (Fig 4, Table 1). The stop rule was triggered before M'' was tallied.
+In the criterion-validity reanalysis the gate passed — T/σ_diff = 2.73 — and M' landed at 3/5. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, {11..20}, for N=15. There the gate failed: T/σ_diff = 1.80. The same training configuration produced a median noise scale roughly 50% higher on the new seed set, 0.0362 against 0.0239 (Table 1). The stop rule was triggered before M'' was tallied.
 
 The finding sits there. Measurability itself is seed-variable: the noise scale T was anchored against on one seed set does not hold on another under identical configuration. That is one level deeper than the phenomenon. We cannot decide whether climb-then-slide is robust — not because we lack data, but because the threshold is not stably applicable across seeds.
+
+### 3.5 The gate verdict is itself seed-variable
+
+The FAIL was a slice outcome. The N=15 escalation computed its FAIL — T/σ_diff = 1.80 — on the ten new seeds {11..20}. But the verdict depends on which seeds are drawn: the full set {6..20} gives T/σ_diff = 2.1459 — a bare PASS. Same corpus, different slice, opposite verdict.
+
+The verdict-stability resampling pre-registered this as a question and measured it. Resampling across the fifteen seeds — exhaustive choose-k for k=5 and k=10, the full set for k=15 — yields the distribution of the gate verdict itself. At k=5 the PASS rate is 0.5734, a coin flip; at k=10 it is 0.7063. The distribution sits centered just above the threshold — k=5 median ratio 2.146 — yet 43% of draws fall below 2.0. The verdict landed in the pre-registered mid-band [0.20, 0.80): the gate verdict is intrinsically seed-variable.
+
+The mechanism is not the one §3.4 implied — and the resampling corrects it. A Brown-Forsythe test on {6..10} against {11..20} gives W = 0.000159, p = 0.99: there is no detectable scale difference between the batches. The apparent ~50% gap in median noise (0.0239 against 0.0362) is not a noisier second batch. It is seed-wander across the noise floor σ* = T/(2√2) = 0.0326. The population straddles the floor, so the median's position — and with it the verdict — depends on the draw, not on the batch. Where §3.4 read the two seed sets as genuinely different, they are one set straddling a common floor.
+
+This is the endpoint the resampling named in advance, now realized — the earned, quantified form of "measurability is seed-variable": a real endpoint, not a call for more compute.

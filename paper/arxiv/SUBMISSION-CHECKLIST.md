@@ -126,7 +126,7 @@ From `submission-metadata.md`:
 
 - LaTeX source: `chatcat-methods.tex` ✓
 - Bibliography: `refs.bib` ✓ (5 entries: Ntalampiras 2019, Anthes 2022, Schneiders et al. 2024, Van Patter & Blattner 2020, Mancini & Nannoni 2023)
-- Vector figures: `figures/fig1_climb_then_slide.pdf`, `fig2_sig_exploration.pdf`, `fig3_confounder_symmetric.pdf`, `fig4_noise_scale_comparison.pdf` ✓ (all 4 generated from `plot_methods_figures.py` with dejargonized English captions)
+- Vector figures: `figures/fig1_climb_then_slide.pdf`, `fig2_sig_exploration.pdf`, `fig3_confounder_symmetric.pdf`, `fig4_gate_ratio_distribution.pdf` ✓ (all 4 generated from `plot_methods_figures.py` with dejargonized English captions; fig4 reads the committed `analysis/gate_ratio_distribution_k5.csv`)
 - Metadata draft: `submission-metadata.md` ✓
 - This checklist: `SUBMISSION-CHECKLIST.md` ✓
 - **Local LaTeX compilation: NOT VERIFIED** — pdflatex not available in the toolchain that built this package. Eirik to compile locally before upload, or rely on arXiv compilation (slower iteration on errors).

@@ -150,13 +150,9 @@ On the seeds that reproduce climb-then-slide, the SIG-EXPLORATION signature hold
 
 ### 3.4 The gate passed, then failed
 
-In the criterion-validity reanalysis the gate passed — T/σ_diff = 2.73 — and M' landed at 3/5. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, {11..20}, for N=15. There the gate failed: T/σ_diff = 1.80. The same training configuration produced a median noise scale roughly 50% higher on the new seed set, 0.0362 against 0.0239 (Fig 4, Table 1). The stop rule was triggered before M'' was tallied.
+In the criterion-validity reanalysis the gate passed — T/σ_diff = 2.73 — and M' landed at 3/5. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, {11..20}, for N=15. There the gate failed: T/σ_diff = 1.80. The same training configuration produced a median noise scale roughly 50% higher on the new seed set, 0.0362 against 0.0239 (Table 1). The stop rule was triggered before M'' was tallied.
 
 The finding sits there. Measurability itself is seed-variable: the noise scale T was anchored against on one seed set does not hold on another under identical configuration. That is one level deeper than the phenomenon. We cannot decide whether climb-then-slide is robust — not because we lack data, but because the threshold is not stably applicable across seeds.
-
-![Fig 4 — Same training config, ~50% different median noise scale across seed-batches](figures/fig4_noise_scale_comparison.png)
-
-*Fig 4 — Same training config, ~50% different median noise scale across seed-batches. Per-seed inter-update SD of ep_return_mean_recent in each seed's revised buffer-full ep_init window. Identical training config produces medians 0.024 vs 0.036 (50% difference) across the two seed-batches — large enough to flip the criterion-validity gate from PASS (2.73) to FAIL (1.80) without any methodology change.*
 
 **Table 1 — Criterion-validity gate: criterion-validity reanalysis PASS vs N=15 escalation FAIL.** Per-seed inter-update SD of `ep_return_mean_recent` over each seed's revised buffer-full ep_init window (first 51 updates with `ep_return_n_recent ≥ 100`). Gate fires if `T / (σ_median × √2) ≥ ~2`.
 
@@ -189,6 +185,20 @@ The finding sits there. Measurability itself is seed-variable: the noise scale T
 | Gate decision (threshold ≥ ~2) | **PASS** | **FAIL** |
 
 T = 0.0922 (locked since commit `0140536`). The gate was triggered in opposite directions on the two batches despite identical training configuration — evidence that the gate is not a formality and that same-config noise scale is itself substantial.
+
+### 3.5 The gate verdict is itself seed-variable
+
+The FAIL was a slice outcome. The N=15 escalation computed its FAIL — T/σ_diff = 1.80 — on the ten new seeds {11..20}. But the verdict depends on which seeds are drawn: the full set {6..20} gives T/σ_diff = 2.1459 — a bare PASS. Same corpus, different slice, opposite verdict.
+
+The verdict-stability resampling pre-registered this as a question and measured it. Resampling across the fifteen seeds — exhaustive choose-k for k=5 and k=10, the full set for k=15 — yields the distribution of the gate verdict itself. At k=5 the PASS rate is 0.5734, a coin flip; at k=10 it is 0.7063. The distribution sits centered just above the threshold — k=5 median ratio 2.146 — yet 43% of draws fall below 2.0. The verdict landed in the pre-registered mid-band [0.20, 0.80): the gate verdict is intrinsically seed-variable.
+
+The mechanism is not the one §3.4 implied — and the resampling corrects it. A Brown-Forsythe test on {6..10} against {11..20} gives W = 0.000159, p = 0.99: there is no detectable scale difference between the batches. The apparent ~50% gap in median noise (0.0239 against 0.0362) is not a noisier second batch. It is seed-wander across the noise floor σ* = T/(2√2) = 0.0326. The population straddles the floor, so the median's position — and with it the verdict — depends on the draw, not on the batch. Where §3.4 read the two seed sets as genuinely different, they are one set straddling a common floor.
+
+This is the endpoint the resampling named in advance, now realized — the earned, quantified form of "measurability is seed-variable": a real endpoint, not a call for more compute.
+
+![Fig 4 — Distribution of the gate-verdict ratio across the fifteen seeds (k=5 resampling)](figures/fig4_gate_ratio_distribution.png)
+
+*Fig 4 — Distribution of the gate-verdict ratio T/σ_diff across the fifteen seeds (k=5 resampling, all 3003 draws), with the threshold at 2.0 marked. The distribution straddles the threshold: PASS rate 0.5734, median ratio 2.146, with 43% of draws below 2.0. A Brown-Forsythe test (p = 0.99) shows that the apparent difference in median noise between seed batches is not a real scale difference — the verdict depends on which seeds are drawn, not on the batch.*
 
 ---
 
@@ -242,6 +252,9 @@ The entire decision-and-evidence trail for the evaluation lives committed on `or
 | **ADR 0012 — escalation to N=15** | | | |
 | Stub (N=15 + three-way success + middle-band discipline) | `3e45ac7` | 2026-06-05 | Seeds {11..20}, middle band as endpoint |
 | Resolution (gate FAIL, M'' not tallied) | `7e4dbd9` | 2026-06-06 | T/σ_diff = 1.8027 FAIL; ~50% noise-scale discrepancy |
+| **ADR 0013 — verdict-stability resampling** | | | |
+| Stub (resampling pre-registered, decision bands locked) | `a14ca78` | 2026-06-12 | Exhaustive choose-k over the 15 seeds; three-way PASS-rate bands locked before the distribution was read |
+| Resolution (mid-band: verdict seed-variable) | `705ea71` | 2026-06-12 | k=5 PASS-rate 0.5734 ∈ [0.20, 0.80); Brown-Forsythe p = 0.99 — seed-wander, not a noisier batch |
 | **Supporting commits** | | | |
 | Instrumentation (`actor_logstd` logging + checkpoint-on-best) | `cd5def3` | 2026-06-04 | `metrics.jsonl` schema extended for SIG-EXPLORATION reading |
 | Figures + plotting script | `e05300b` | 2026-06-06 | Fig 1–4 + Table 1–2 reproducible from metrics.jsonl |
@@ -249,7 +262,7 @@ The entire decision-and-evidence trail for the evaluation lives committed on `or
 
 ### Reproducibility
 
-All training runs live as `metrics.jsonl` + `agent.pt` + `best_so_far.pt` under `~/chatcat-rl-runs/` (persistent path, documented in ADR 0010 Step 1.5). The plotting script `paper/plot_methods_figures.py` regenerates Fig 1–4 and Tables 1–2 from the same `metrics.jsonl` files; no new training is required to reproduce the figures. Vector export (PDF/SVG) for submission can be produced by changing the `savefig` extension in the script.
+All training runs live as `metrics.jsonl` + `agent.pt` + `best_so_far.pt` under `~/chatcat-rl-runs/` (persistent path, documented in ADR 0010 Step 1.5). The plotting script `paper/plot_methods_figures.py` regenerates Fig 1–3 and Tables 1–2 from the same `metrics.jsonl` files; no new training is required. Fig 4 is regenerated from the committed artefact `paper/analysis/gate_ratio_distribution_k5.csv` — the exhaustive k=5 gate-verdict distribution produced by `paper/analysis/gate_distribution.py` from the frozen `seed_summary_frozen.csv` — so the verdict-stability figure is reproducible from committed substrate, not from a transient run. Vector export (PDF/SVG) for submission can be produced by changing the `savefig` extension in the script.
 
 Devlog entries in `docs/observations/` provide a timestamp and short prose for ADR 0008/0009/0010 in the author's voice; they are not evidence ground for the paper, but give the context for each ADR decision phase.
 

@@ -84,32 +84,38 @@ def variance_partition(sigma_orig: np.ndarray, sigma_esc: np.ndarray) -> dict:
     }
 
 
-def resample_gate(sigmas: np.ndarray, k: int, rng: np.random.Generator,
-                  exhaustive_max: int = EXHAUSTIVE_MAX,
-                  bootstrap_b: int = BOOTSTRAP_B) -> dict:
-    """Distribution of gate ratio over resamples of size k.
+def resample_ratios(sigmas: np.ndarray, k: int, rng: np.random.Generator,
+                    exhaustive_max: int = EXHAUSTIVE_MAX,
+                    bootstrap_b: int = BOOTSTRAP_B):
+    """Raw gate-ratio array over resamples of size k. Returns (method, ratios).
 
     Exhaustive choose-k (without replacement) when C(n, k) <= exhaustive_max;
     otherwise bootstrap (with replacement) of `bootstrap_b` draws.
     k == n is the degenerate single-sample case (the full-set verdict).
+    The exhaustive path is RNG-free and therefore fully deterministic — this is
+    what makes the persisted k=5 distribution reproducible from the frozen CSV.
     """
     n = sigmas.size
     if k > n:
         raise ValueError(f"k={k} > n={n}")
 
     if k == n:
-        ratios = np.array([gate_ratio(sigmas)])
-        method = "full-set (single verdict)"
-    else:
-        n_comb = math.comb(n, k)
-        if n_comb <= exhaustive_max:
-            ratios = np.array([gate_ratio(sigmas[list(idx)])
-                               for idx in combinations(range(n), k)])
-            method = f"exhaustive choose-k (C({n},{k})={n_comb})"
-        else:
-            ratios = np.array([gate_ratio(rng.choice(sigmas, size=k, replace=True))
-                               for _ in range(bootstrap_b)])
-            method = f"bootstrap (B={bootstrap_b}, with replacement)"
+        return "full-set (single verdict)", np.array([gate_ratio(sigmas)])
+    n_comb = math.comb(n, k)
+    if n_comb <= exhaustive_max:
+        return (f"exhaustive choose-k (C({n},{k})={n_comb})",
+                np.array([gate_ratio(sigmas[list(idx)])
+                          for idx in combinations(range(n), k)]))
+    return (f"bootstrap (B={bootstrap_b}, with replacement)",
+            np.array([gate_ratio(rng.choice(sigmas, size=k, replace=True))
+                      for _ in range(bootstrap_b)]))
+
+
+def resample_gate(sigmas: np.ndarray, k: int, rng: np.random.Generator,
+                  exhaustive_max: int = EXHAUSTIVE_MAX,
+                  bootstrap_b: int = BOOTSTRAP_B) -> dict:
+    """Distribution summary of the gate ratio over resamples of size k."""
+    method, ratios = resample_ratios(sigmas, k, rng, exhaustive_max, bootstrap_b)
 
     pass_mask = ratios >= GATE_THRESHOLD
     qs = np.quantile(ratios, QUANTILES)
@@ -154,6 +160,23 @@ def _load_real_sigmas():
     return orig, esc
 
 
+def persist_k5_distribution(sigmas: np.ndarray, path) -> tuple:
+    """Write the exhaustive k=5 gate-ratio distribution (all C(15,5)=3003 draws)
+    to `path` as CSV. This is the committed substrate Fig 4 reads from — the
+    figure must come from a committed artefact, not a stdout number. The k=5
+    exhaustive path is RNG-free, so the CSV is fully reproducible from the
+    frozen summary. Returns (method, ratios)."""
+    import csv
+    rng = np.random.default_rng(0)  # unused on the exhaustive k=5 path
+    method, ratios = resample_ratios(np.asarray(sigmas, dtype=float), 5, rng)
+    with open(path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["draw_index", "ratio"])
+        for i, r in enumerate(ratios):
+            w.writerow([i, float(r)])
+    return method, ratios
+
+
 def _print_report(out: dict) -> None:
     vp = out["variance_partition"]
     print("=== Variance partition (sigma_init) ===")
@@ -185,6 +208,10 @@ def main() -> None:
     p.add_argument("--smoke-test", action="store_true",
                    help="Run on SYNTHETIC sigma values to verify code paths and "
                         "output schema. Reads no real data; reports no real verdict.")
+    p.add_argument("--persist", metavar="PATH", default=None,
+                   help="With --i-have-the-trigger: write the exhaustive k=5 "
+                        "gate-ratio distribution (all C(15,5)=3003 draws) to PATH "
+                        "as CSV. The committed substrate Fig 4 reads from.")
     args = p.parse_args()
 
     if args.smoke_test:
@@ -208,6 +235,15 @@ def main() -> None:
     orig, esc = _load_real_sigmas()
     out = compute_distribution(orig, esc, seed=0)
     _print_report(out)
+
+    if args.persist:
+        all_sigmas = np.concatenate([np.asarray(orig, dtype=float),
+                                     np.asarray(esc, dtype=float)])
+        method, ratios = persist_k5_distribution(all_sigmas, args.persist)
+        print(f"\n[PERSISTED] k=5 distribution ({method}) -> {args.persist}")
+        print(f"  rows={ratios.size} "
+              f"pass_rate(>=2.0)={float(np.mean(ratios >= GATE_THRESHOLD)):.4f} "
+              f"median={float(np.median(ratios)):.4f}")
 
 
 if __name__ == "__main__":

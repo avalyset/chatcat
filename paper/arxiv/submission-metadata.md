@@ -102,7 +102,7 @@ refs.bib
 figures/fig1_climb_then_slide.pdf
 figures/fig2_sig_exploration.pdf
 figures/fig3_confounder_symmetric.pdf
-figures/fig4_noise_scale_comparison.pdf
+figures/fig4_gate_ratio_distribution.pdf
 ```
 
 Total: 6 files (1 .tex, 1 .bib, 4 figures). arXiv accepts these as a single .tar.gz or .zip upload, or as individual files via the web form. arXiv will run pdflatex + bibtex on the source.
