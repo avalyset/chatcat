@@ -182,7 +182,7 @@ Funnet ligger der. Målbarheten selv er seed-variabel: noise-skalaen T ble foran
 | T / σ_diff | **2.7257** | **1.8027** |
 | Gate decision (threshold ≥ ~2) | **PASS** | **FAIL** |
 
-T = 0.0922 (locked since commit `0140536`). Gaten ble utløst i motsatte retninger på de to batchene tross identisk treningskonfigurasjon — bevis på at gaten ikke er en formalitet og at same-config noise-skala selv er substansiell.
+T = 0.0922 (låst i den opprinnelige pre-registreringen, ADR 0010). Gaten ble utløst i motsatte retninger på de to batchene tross identisk treningskonfigurasjon — bevis på at gaten ikke er en formalitet og at same-config noise-skala selv er substansiell.
 
 ### 3.5 Gate-verdiktet er selv seed-variabelt
 
@@ -234,27 +234,29 @@ Det vi tilbyr feltet er ikke et svar på climb-then-slide. Det er en metode som 
 
 ## Appendiks A — ADR-kjeden som reproduserbar evidens-spor
 
-Hele evalueringens beslutnings- og evidens-spor ligger committed på `origin/main`. Hver påstand i papirets §3 (Resultater) og §2.3–2.5 (forankrings-seed, gate, falsifiserings-struktur) peker på en av disse commitene som låser forutsetningen påstanden hviler på. Stub-commits låste metoden før data; resolution-commits rapporterte utfallet mot den allerede-frosne metoden. ADR-numre beholdes i denne appendiksen som kryssreferanse-indeks; hovedteksten over bruker semantiske beskrivelser («den opprinnelige pre-registreringen», «kriterie-validitet-reanalysen», «N=15-escaleringen»).
+Hele evalueringens beslutnings- og evidens-spor ligger som en kronologisk ADR-kjede, stub før resolusjon. Hver påstand i papirets §3 (Resultater) og §2.3–2.5 (forankrings-seed, gate, falsifiserings-struktur) peker på en pre-registrert ADR som låser forutsetningen påstanden hviler på: stubben låste metoden før data; resolusjonen rapporterte utfallet mot den allerede-frosne metoden. ADR-er siteres ved nummer (deres permanente identifikator), og det reproduserbare substratet for verdikt-stabilitets-analysen (ADR 0013) er arkivert som en immutabel, tidsstemplet OSF Registration (DOI i noten under tabellen). Hovedteksten over bruker semantiske beskrivelser («den opprinnelige pre-registreringen», «kriterie-validitet-reanalysen», «N=15-escaleringen»).
 
-| Fase | Commit | Dato | Hva ble låst / rapportert |
-|---|---|---|---|
-| **ADR 0010 — opprinnelig kriterium** | | | |
-| Stub (framings-spørsmål + SIG-EXPLORATION-diagnose) | `31c363e` | 2026-06-03 | Strukturelt-funn-framing valgt (ikke deployerbar fiks); mekanisme-diagnose på partial-data fra forutgående evalueringsrunde |
-| Pre-reg (T og K låst fra forankrings-seed) | `0140536` | 2026-06-04 | T = 0.0922, K = 0.004986, peak-vindu, falsifiserere F1–F4 |
-| Resolution (hovedrunde {6..10}, F3 fyrte) | `1ba60c0` | 2026-06-05 | M = 2/5 mot låst kriterium; climb-vindu-konfunder dokumentert |
-| **ADR 0011 — kriterie-validitet-gate innført** | | | |
-| Stub (gate pre-registrert) | `4647ed8` | 2026-06-05 | Revidert ep_init-vindu, gate-formel, M'-tre-veis-utfall |
-| Resolution (reanalyse, gate PASS, M' = 3/5) | `8e977f1` | 2026-06-05 | T/σ_diff = 2.7257 PASS; tre seeds flippet CTS-status |
-| **ADR 0012 — escalation til N=15** | | | |
-| Stub (N=15 + tre-veis suksess + midtbånd-disiplin) | `3e45ac7` | 2026-06-05 | Seeds {11..20}, midtbånd som sluttpunkt |
-| Resolution (gate FAIL, M'' ikke talt) | `7e4dbd9` | 2026-06-06 | T/σ_diff = 1.8027 FAIL; ~50 % noise-skala-diskrepans |
-| **ADR 0013 — verdikt-stabilitets-resampling** | | | |
-| Stub (resampling pre-registrert, beslutnings-bånd låst) | `a14ca78` | 2026-06-12 | Uttømmende choose-k over de 15 seedene; tre-veis PASS-rate-bånd låst før fordelingen ble lest |
-| Resolution (midtbånd: verdikt seed-variabelt) | `705ea71` | 2026-06-12 | k=5 PASS-rate 0.5734 ∈ [0.20, 0.80); Brown-Forsythe p = 0.99 — seed-wander, ikke en støyere batch |
-| **Støtte-commits** | | | |
-| Instrumentering (`actor_logstd`-logging + checkpoint-on-best) | `cd5def3` | 2026-06-04 | `metrics.jsonl`-skjema utvidet for SIG-EXPLORATION-lesning |
-| Figurer + plotting-script | `e05300b` | 2026-06-06 | Fig 1–4 + Tabell 1–2 reproduserbart fra metrics.jsonl |
-| Kilde-korreksjon (MeowTalk-attribusjon + 4 verifiserte refs) | `62bccf8` | 2026-06-06 | §1.1s fire (ref) låst mot verifiserte originaler |
+| Fase | Dato | Hva ble låst / rapportert |
+|---|---|---|
+| **ADR 0010 — opprinnelig kriterium** | | |
+| Stub (framings-spørsmål + SIG-EXPLORATION-diagnose) | 2026-06-03 | Strukturelt-funn-framing valgt (ikke deployerbar fiks); mekanisme-diagnose på partial-data fra forutgående evalueringsrunde |
+| Pre-reg (T og K låst fra forankrings-seed) | 2026-06-04 | T = 0.0922, K = 0.004986, peak-vindu, falsifiserere F1–F4 |
+| Resolution (hovedrunde {6..10}, F3 fyrte) | 2026-06-05 | M = 2/5 mot låst kriterium; climb-vindu-konfunder dokumentert |
+| **ADR 0011 — kriterie-validitet-gate innført** | | |
+| Stub (gate pre-registrert) | 2026-06-05 | Revidert ep_init-vindu, gate-formel, M'-tre-veis-utfall |
+| Resolution (reanalyse, gate PASS, M' = 3/5) | 2026-06-05 | T/σ_diff = 2.7257 PASS; tre seeds flippet CTS-status |
+| **ADR 0012 — escalation til N=15** | | |
+| Stub (N=15 + tre-veis suksess + midtbånd-disiplin) | 2026-06-05 | Seeds {11..20}, midtbånd som sluttpunkt |
+| Resolution (gate FAIL, M'' ikke talt) | 2026-06-06 | T/σ_diff = 1.8027 FAIL; ~50 % noise-skala-diskrepans |
+| **ADR 0013 — verdikt-stabilitets-resampling** (substrat: OSF DOI 10.17605/OSF.IO/SCX59) | | |
+| Stub (resampling pre-registrert, beslutnings-bånd låst) | 2026-06-12 | Uttømmende choose-k over de 15 seedene; tre-veis PASS-rate-bånd låst før fordelingen ble lest |
+| Resolution (midtbånd: verdikt seed-variabelt) | 2026-06-12 | k=5 PASS-rate 0.5734 ∈ [0.20, 0.80); Brown-Forsythe p = 0.99 — seed-wander, ikke en støyere batch |
+| **Støtte-arbeid** | | |
+| Instrumentering (`actor_logstd`-logging + checkpoint-on-best) | 2026-06-04 | `metrics.jsonl`-skjema utvidet for SIG-EXPLORATION-lesning |
+| Figurer + plotting-script | 2026-06-06 | Fig 1–4 + Tabell 1–2 reproduserbart fra metrics.jsonl |
+| Kilde-korreksjon (MeowTalk-attribusjon + 4 verifiserte refs) | 2026-06-06 | §1.1s fire (ref) låst mot verifiserte originaler |
+
+Det fulle reproduserbare substratet for verdikt-stabilitets-analysen (ADR 0013) — den frosne 15-seed-summaryen, den kjørbare gaten og CTS-tallyen, frysings-scriptet, og den uttømmende k=5 gate-verdikt-ratio-fordelingen (alle 3003 trekk) — er arkivert som en immutabel, tidsstemplet OSF Registration: DOI [10.17605/OSF.IO/SCX59](https://doi.org/10.17605/OSF.IO/SCX59). Dette er det varige, siterbare ankeret for analysen, uavhengig av enhver repo-commit.
 
 ### Reproduserbarhet
 

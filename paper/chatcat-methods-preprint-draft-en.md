@@ -179,7 +179,7 @@ The finding sits there. Measurability itself is seed-variable: the noise scale T
 | T / σ_diff | **2.7257** | **1.8027** |
 | Gate decision (threshold ≥ ~2) | **PASS** | **FAIL** |
 
-T = 0.0922 (locked since commit `0140536`). The gate was triggered in opposite directions on the two batches despite identical training configuration — evidence that the gate is not a formality and that same-config noise scale is itself substantial.
+T = 0.0922 (locked in the original pre-registration, ADR 0010). The gate was triggered in opposite directions on the two batches despite identical training configuration — evidence that the gate is not a formality and that same-config noise scale is itself substantial.
 
 ### 3.5 The gate verdict is itself seed-variable
 
@@ -233,27 +233,29 @@ What we offer the field is not an answer to climb-then-slide. It is a method tha
 
 ## Appendix A — The ADR chain as a reproducible evidence trail
 
-The entire decision-and-evidence trail for the evaluation lives committed on `origin/main`. Every claim in the paper's §3 (Results) and §2.3–2.5 (anchoring seed, gate, falsification structure) points to one of these commits as the lock for the assumption it rests on. Stub commits locked the methodology before data; resolution commits reported the outcome against the already-frozen methodology. ADR numbers are retained in this appendix as a cross-reference index; the main text above uses semantic descriptions ("the original pre-registration", "the criterion-validity reanalysis", "the N=15 escalation").
+The entire decision-and-evidence trail for the evaluation lives as a chronological ADR chain, stub before resolution. Every claim in the paper's §3 (Results) and §2.3–2.5 (anchoring seed, gate, falsification structure) points to a pre-registered ADR as the lock for the assumption it rests on: the stub locked the methodology before data; the resolution reported the outcome against the already-frozen methodology. ADRs are cited by number (their permanent identifier), and the reproducible substrate for the verdict-stability analysis (ADR 0013) is archived as an immutable, timestamped OSF Registration (DOI in the note below the table). The main text above uses semantic descriptions ("the original pre-registration", "the criterion-validity reanalysis", "the N=15 escalation").
 
-| Phase | Commit | Date | What was locked / reported |
-|---|---|---|---|
-| **ADR 0010 — original criterion** | | | |
-| Stub (framing question + SIG-EXPLORATION diagnosis) | `31c363e` | 2026-06-03 | Structural-finding framing chosen (not a deployable fix); mechanism diagnosis on partial data from the prior evaluation round |
-| Pre-reg (T and K locked from anchoring seed) | `0140536` | 2026-06-04 | T = 0.0922, K = 0.004986, peak window, falsifiers F1–F4 |
-| Resolution (main run {6..10}, F3 triggered) | `1ba60c0` | 2026-06-05 | M = 2/5 against locked criterion; climb-window confounder documented |
-| **ADR 0011 — criterion-validity gate introduced** | | | |
-| Stub (gate pre-registered) | `4647ed8` | 2026-06-05 | Revised ep_init window, gate formula, three-way M' outcome |
-| Resolution (reanalysis, gate PASS, M' = 3/5) | `8e977f1` | 2026-06-05 | T/σ_diff = 2.7257 PASS; three seeds flipped CTS status |
-| **ADR 0012 — escalation to N=15** | | | |
-| Stub (N=15 + three-way success + middle-band discipline) | `3e45ac7` | 2026-06-05 | Seeds {11..20}, middle band as endpoint |
-| Resolution (gate FAIL, M'' not tallied) | `7e4dbd9` | 2026-06-06 | T/σ_diff = 1.8027 FAIL; ~50% noise-scale discrepancy |
-| **ADR 0013 — verdict-stability resampling** | | | |
-| Stub (resampling pre-registered, decision bands locked) | `a14ca78` | 2026-06-12 | Exhaustive choose-k over the 15 seeds; three-way PASS-rate bands locked before the distribution was read |
-| Resolution (mid-band: verdict seed-variable) | `705ea71` | 2026-06-12 | k=5 PASS-rate 0.5734 ∈ [0.20, 0.80); Brown-Forsythe p = 0.99 — seed-wander, not a noisier batch |
-| **Supporting commits** | | | |
-| Instrumentation (`actor_logstd` logging + checkpoint-on-best) | `cd5def3` | 2026-06-04 | `metrics.jsonl` schema extended for SIG-EXPLORATION reading |
-| Figures + plotting script | `e05300b` | 2026-06-06 | Fig 1–4 + Table 1–2 reproducible from metrics.jsonl |
-| Source-attribution correction (MeowTalk attribution + 4 verified refs) | `62bccf8` | 2026-06-06 | The four §1.1 (ref) markers locked against verified originals |
+| Phase | Date | What was locked / reported |
+|---|---|---|
+| **ADR 0010 — original criterion** | | |
+| Stub (framing question + SIG-EXPLORATION diagnosis) | 2026-06-03 | Structural-finding framing chosen (not a deployable fix); mechanism diagnosis on partial data from the prior evaluation round |
+| Pre-reg (T and K locked from anchoring seed) | 2026-06-04 | T = 0.0922, K = 0.004986, peak window, falsifiers F1–F4 |
+| Resolution (main run {6..10}, F3 triggered) | 2026-06-05 | M = 2/5 against locked criterion; climb-window confounder documented |
+| **ADR 0011 — criterion-validity gate introduced** | | |
+| Stub (gate pre-registered) | 2026-06-05 | Revised ep_init window, gate formula, three-way M' outcome |
+| Resolution (reanalysis, gate PASS, M' = 3/5) | 2026-06-05 | T/σ_diff = 2.7257 PASS; three seeds flipped CTS status |
+| **ADR 0012 — escalation to N=15** | | |
+| Stub (N=15 + three-way success + middle-band discipline) | 2026-06-05 | Seeds {11..20}, middle band as endpoint |
+| Resolution (gate FAIL, M'' not tallied) | 2026-06-06 | T/σ_diff = 1.8027 FAIL; ~50% noise-scale discrepancy |
+| **ADR 0013 — verdict-stability resampling** (substrate: OSF DOI 10.17605/OSF.IO/SCX59) | | |
+| Stub (resampling pre-registered, decision bands locked) | 2026-06-12 | Exhaustive choose-k over the 15 seeds; three-way PASS-rate bands locked before the distribution was read |
+| Resolution (mid-band: verdict seed-variable) | 2026-06-12 | k=5 PASS-rate 0.5734 ∈ [0.20, 0.80); Brown-Forsythe p = 0.99 — seed-wander, not a noisier batch |
+| **Supporting work** | | |
+| Instrumentation (`actor_logstd` logging + checkpoint-on-best) | 2026-06-04 | `metrics.jsonl` schema extended for SIG-EXPLORATION reading |
+| Figures + plotting script | 2026-06-06 | Fig 1–4 + Table 1–2 reproducible from metrics.jsonl |
+| Source-attribution correction (MeowTalk attribution + 4 verified refs) | 2026-06-06 | The four §1.1 (ref) markers locked against verified originals |
+
+The full reproducible substrate for the verdict-stability analysis (ADR 0013) — the 15-seed frozen summary, the runnable gate and CTS tally, the freezing script, and the exhaustive k=5 gate-verdict-ratio distribution (all 3003 draws) — is archived as an immutable, timestamped OSF Registration: DOI [10.17605/OSF.IO/SCX59](https://doi.org/10.17605/OSF.IO/SCX59). This is the durable, citable anchor for the analysis, independent of any repository commit.
 
 ### Reproducibility
 

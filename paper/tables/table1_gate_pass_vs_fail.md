@@ -30,4 +30,4 @@ Per-seed inter-update-SD of `ep_return_mean_recent` over each seed's revised buf
 | T / σ_diff | **2.7257** | **1.8027** |
 | Gate decision (threshold ≥ ~2) | **PASS** | **FAIL** |
 
-T = 0.0922 (locked since commit `0140536`). The gate was triggered in opposite directions on the two batches despite identical training configuration — evidence that the gate is not a formality and that same-config noise-scale is itself substantial.
+T = 0.0922 (locked in the original pre-registration, ADR 0010). The gate was triggered in opposite directions on the two batches despite identical training configuration — evidence that the gate is not a formality and that same-config noise-scale is itself substantial.
