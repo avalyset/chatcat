@@ -2,7 +2,7 @@
 
 This file holds the fields Eirik will paste into the arXiv submission form.
 Source-of-truth: `paper/sections/*-en.md` + `paper/chatcat-methods-preprint-draft-en.md`
-on commit `13b8889` (origin/main).
+on `origin/main`.
 
 ---
 

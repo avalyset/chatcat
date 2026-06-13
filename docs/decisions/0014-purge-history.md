@@ -1,8 +1,43 @@
 # ADR 0014: Purge superseded draft material from git history before public release
 
 ## Status
-Proposed (pre-registered before the rewrite; ADR-before-fix discipline).
-Destructive history operation — requires explicit go before execution.
+**Resolved (executed 2026-06-13).** The history rewrite was run with
+`git filter-repo --replace-text` after both verification gates passed on a
+fresh clone, then force-pushed to `origin`. The SHAs named in the body below
+are the **pre-rewrite** identifiers (accurate at write time); all of them
+from the first carrier commit forward were replaced by the rewrite. See the
+Resolution section for the old→new mapping. New `origin/main` HEAD: `2bbb5b2`.
+
+## Resolution (executed 2026-06-13)
+
+- **Method:** `git filter-repo --replace-text` on a fresh clone of the local
+  repo (carrying ADR 0014 + the appendix-conversion commit), removing the
+  superseded material from all historical blobs.
+- **Gate 1 (history clean):** `git grep -i` for every sealed term across all
+  refs returns nothing. PASS.
+- **Gate 2 (HEAD bit-exact):** the rewritten HEAD tree object is identical to
+  the pre-rewrite HEAD tree (`d5cb61b`), and the arXiv-bundle blob hash is
+  unchanged (`2f6051b`). PASS.
+- **Force-pushed** to `origin/main` (private repo, single collaborator;
+  re-cloned locally afterward). The pre-rewrite local clone was retained as a
+  backup outside the repo.
+- **Old→new SHA mapping** (everything from the first carrier commit forward
+  changed; ancestors are unchanged):
+
+  | pre-rewrite | new |
+  |---|---|
+  | 32b1829 (prior HEAD) | 4438339 |
+  | ec78dd1 (ADR 0014)   | 8c4b400 |
+  | c1cddd9 (appendix conversion) | 2bbb5b2 (new HEAD) |
+  | a9c44f4 (title-lock) | 5515916 |
+  | a14ca78 (ADR 0013 freeze) | 005b75d |
+  | 705ea71 (ADR 0013 resolution) | d7b70b8 |
+  | e6d2fa0 (compartmentalization scrub) | b0eb863 |
+  | b7d3a88 | 0d36c7c |
+  | 756d2fd | 9098d27 |
+
+  The paper's Appendix A was made hash-independent (ADR refs + OSF DOI
+  10.17605/OSF.IO/SCX59) before the rewrite, so it required no SHA updates.
 
 ## Context
 
