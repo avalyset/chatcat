@@ -14,3 +14,6 @@ __pycache__/
 # ADR 0005 — analyse-baseline.ts is exploratory, not committed.
 # See docs/decisions/0005-baseline-interpretation.md (§Files).
 litterbox/scripts/analyse-baseline.ts
+
+# Unfinished draft position paper — kept locally, untracked (pre-public release)
+docs/ideas/theoretical-foundations.md

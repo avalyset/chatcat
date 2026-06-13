@@ -36,7 +36,7 @@ If Eirik already has cs.LG submission history, endorsement is automatic and this
 - [ ] Install MacTeX if not present: `brew install --cask mactex-no-gui` (~2GB download, one-time)
 - [ ] Compile locally:
   ```bash
-  cd /Users/eirikbottennicolaysen/ClaudeWork/chatcat/paper/arxiv
+  cd /path/to/chatcat/paper/arxiv
   pdflatex chatcat-methods.tex
   bibtex chatcat-methods
   pdflatex chatcat-methods.tex
@@ -66,7 +66,7 @@ If local compilation fails:
 
 - [ ] Upload as a `.zip` or `.tar.gz` bundle:
   ```bash
-  cd /Users/eirikbottennicolaysen/ClaudeWork/chatcat/paper/arxiv
+  cd /path/to/chatcat/paper/arxiv
   tar -czf chatcat-methods-arxiv-submission.tar.gz chatcat-methods.tex refs.bib chatcat-methods.bbl figures/
   ```
   Note: ship `chatcat-methods.bbl` deliberately — arXiv does not reliably re-run bibtex, and a missing `.bbl` is the most common submission failure. The verified bundle (built+tested this session) is committed at `paper/arxiv/chatcat-methods-arxiv-submission.tar.gz`.
