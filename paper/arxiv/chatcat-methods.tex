@@ -85,17 +85,53 @@ The paper delimits what it claims. It does not claim that the phenomenon we obse
 \section{Related Work}
 \label{sec:related}
 
-[POSITIONING: gate vs Henderson --- reproducibility-crisis framing]
-\citet{henderson2018deep}.
+The fragility of RL results is well documented. \citet{henderson2018deep} showed
+that published reinforcement-learning numbers often fail to hold up: variance
+across seeds, implementations, and hyperparameters is large enough that a
+reported result can be an artefact of the particular run rather than a property
+of the algorithm. Our gate addresses a specific sub-case of that fragility. The
+problem \citet{henderson2018deep} document sits at the level of the result ---
+the number moves when you rerun it. The gate moves the check one level up, to
+the criterion: not whether the result varies, but whether the threshold the
+result is measured against is separable from the noise in its own window. A
+threshold sitting inside that noise produces unstable verdicts no amount of
+careful result-reporting can rescue, because the instability is in the measuring
+instrument, not the measurement.
 
-[POSITIONING: Agarwal/rliable --- reliable evaluation with few seeds, closest neighbour]
-\citet{agarwal2021deep}.
+The closest neighbour is \citet{agarwal2021deep}. rliable gives reliable
+evaluation on few seeds --- stratified bootstrap confidence intervals,
+performance profiles, interquartile means in place of point estimates --- and
+is the direct methodological precursor to what we do. The difference is worth
+stating plainly, because the two are easy to conflate. rliable quantifies the
+uncertainty in a result: given the seeds you have, how wide is the interval
+around the number. The gate asks a prior question --- whether the criterion is
+applicable at all before the result is computed. The two are complementary and
+sit at different stages of the pipeline: rliable is the right tool once you are
+measuring; the gate is a check on whether the thing you are measuring against
+holds up in the window where you apply it. We do not replace reliable
+result-reporting; we add a step in front of it.
 
-[POSITIONING: Colas --- seed-count / statistical separability, the direct precursor]
-\citet{colas2018howmany} and \citet{colas2019hitchhiker}.
+\citet{colas2018howmany} is the most direct thematic precursor. ``How Many
+Random Seeds?'' and the statistical-comparison guide \citep{colas2019hitchhiker}
+took up exactly seed variance and statistical separability in RL evaluation: how
+many seeds are needed before a difference between two methods is real rather
+than noise. The gate asks that same question one level deeper.
+\citet{colas2018howmany} ask whether there are enough seeds to separate method
+$A$ from method $B$; the gate asks whether the threshold doing the separating is
+itself separable from the noise in the window it is applied to. The seed-wander
+result in Section~\ref{sec:3.5} --- where the gate verdict itself moves with the
+draw --- is a concrete instance of the concern \citet{colas2018howmany} raised,
+surfacing one level up from the comparison they studied.
 
-[POSITIONING: Gundersen \& Kjensmo --- reproducibility-as-field-measurement]
-\citet{gundersen2018state}.
+\citet{gundersen2018state} measured the state of reproducibility in AI
+empirically: degree of documentation, what fraction of reported work can in fact
+be reproduced. That work diagnoses the field; it measures whether AI research is
+reproducible. The gate contributes on the other side of that diagnosis --- not a
+measurement of the gap, but a piece of infrastructure that lets pre-registration
+deliver reproducibility rather than merely reveal its absence. Where
+\citet{gundersen2018state} establish that reproducibility is low, the gate is
+one mechanism for raising it: a pre-registered check that keeps a threshold from
+being applied where it cannot carry a stable verdict.
 
 \section{Methods}
 
