@@ -19,6 +19,7 @@
 \usepackage{hyperref}
 \usepackage{xcolor}
 \usepackage{caption}
+\usepackage{placeins}
 
 \hypersetup{
   colorlinks=true,
@@ -313,6 +314,13 @@ Gate decision (threshold $\geq \sim 2$) & \textbf{PASS} & \textbf{FAIL} \\
 \subsection{The gate verdict is itself seed-variable}
 \label{sec:3.5}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/fig4_gate_ratio_distribution.pdf}
+\caption{Distribution of the gate-verdict ratio $T/\sigma_\mathrm{diff}$ across the fifteen seeds ($k=5$ resampling, all $3003$ draws), with the threshold at $2.0$ marked. The distribution straddles the threshold: PASS rate $0.5734$, median ratio $2.146$, with $43\%$ of draws below $2.0$. A Brown-Forsythe test ($p = 0.99$) shows that the apparent difference in median noise between seed batches is not a real scale difference --- the verdict depends on which seeds are drawn, not on the batch.}
+\label{fig:4}
+\end{figure}
+
 The FAIL was a slice outcome. The N=15 escalation computed its FAIL --- $T/\sigma_\mathrm{diff} = 1.80$ --- on the ten new seeds $\{11 \ldots 20\}$. But the verdict depends on which seeds are drawn: the full set $\{6 \ldots 20\}$ gives $T/\sigma_\mathrm{diff} = 2.1459$ --- a bare PASS. Same corpus, different slice, opposite verdict.
 
 The verdict-stability resampling pre-registered this as a question and measured it. Resampling across the fifteen seeds --- exhaustive choose-k for $k=5$ and $k=10$, the full set for $k=15$ --- yields the distribution of the gate verdict itself (Fig.~\ref{fig:4}). At $k=5$ the PASS rate is $0.5734$, a coin flip; at $k=10$ it is $0.7063$. The distribution sits centred just above the threshold --- $k=5$ median ratio $2.146$ --- yet $43\%$ of draws fall below $2.0$. The verdict landed in the pre-registered mid-band $[0.20, 0.80)$: the gate verdict is intrinsically seed-variable.
@@ -321,13 +329,7 @@ The mechanism is not the one Section~\ref{sec:3.4} implied --- and the resamplin
 
 This is the endpoint the resampling named in advance, now realised --- the earned, quantified form of ``measurability is seed-variable'': a real endpoint, not a call for more compute.
 
-\begin{figure}[!t]
-\centering
-\includegraphics[width=0.95\linewidth]{figures/fig4_gate_ratio_distribution.pdf}
-\caption{Distribution of the gate-verdict ratio $T/\sigma_\mathrm{diff}$ across the fifteen seeds ($k=5$ resampling, all $3003$ draws), with the threshold at $2.0$ marked. The distribution straddles the threshold: PASS rate $0.5734$, median ratio $2.146$, with $43\%$ of draws below $2.0$. A Brown-Forsythe test ($p = 0.99$) shows that the apparent difference in median noise between seed batches is not a real scale difference --- the verdict depends on which seeds are drawn, not on the batch.}
-\label{fig:4}
-\end{figure}
-
+\FloatBarrier
 \section{Discussion}
 
 \subsection{What the result actually is}
@@ -350,7 +352,6 @@ The simulator is not realistic; the sim-to-real gap is undocumented until v0.4. 
 
 What we offer the field is not an answer to climb-then-slide. It is a method that refused to give a false answer, and an explicit trail of why that refusal was the right scientific action. In a field where overclaiming is the documented failure mode, evaluation infrastructure that can say ``this cannot be decided yet, and here is why'' is a precondition for not becoming what one criticises.
 
-\clearpage
 \bibliographystyle{plainnat}
 \bibliography{refs}
 
