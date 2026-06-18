@@ -5,22 +5,20 @@
 % Figures in paper/arxiv/figures/*.pdf (vector, generated from
 % paper/plot_methods_figures.py with dejargonized English captions).
 
-\documentclass[11pt,a4paper]{article}
+\documentclass{article}
+
+\usepackage[preprint]{neurips_2024}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{microtype}
-\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{hyperref}
 \usepackage{xcolor}
-\usepackage{natbib}
 \usepackage{caption}
-\usepackage{titlesec}
 
 \hypersetup{
   colorlinks=true,
@@ -28,10 +26,6 @@
   citecolor=blue!50!black,
   urlcolor=blue!50!black
 }
-
-% Tighter section spacing
-\titlespacing*{\section}{0pt}{1.5ex plus 1ex minus .2ex}{1ex plus .2ex}
-\titlespacing*{\subsection}{0pt}{1.2ex plus 1ex minus .2ex}{0.8ex plus .2ex}
 
 % Code identifiers
 \newcommand{\code}[1]{\texttt{#1}}
@@ -60,7 +54,7 @@ The last result is the point. The phenomenon could not be decided as robust or n
 
 \section{Introduction}
 
-\subsection{}
+\subsection{The reproducibility-threshold problem}
 \label{sec:1.1}
 
 Reproducibility assessment for reinforcement-learning agents rests on thresholds: a metric crosses a line and a run is called clean, or it does not and the run is flagged. The line is the whole judgment. But a threshold can look principled and still be noise-dominated inside the window it is applied to --- and when that happens, a result that reads as clean is a measurement artifact, not a finding. Pre-registration does not catch this on its own. Fixing the threshold and the analysis in advance guards against the obvious failure --- choosing a cutoff after seeing the data --- but it says nothing about whether the chosen cutoff sits above or below the noise floor of the very quantity it gates. A pre-registered threshold that lands inside the noise band is still a clean-looking artifact. It is just an honestly arrived-at one.
@@ -69,24 +63,39 @@ We demonstrate the method on an RL agent trained against an ethological simulato
 
 The simulator itself is seriously constructed, not a toy dressed up for the argument. Its design is litterbox-first and uses no live animal, following the animal-computer-interaction lineage --- the Cat Royale work \citep{schneiders2024} and the ethical position set out by \citet{vanpatter2020} and \citet{mancini2023}, where non-maleficence and voluntary participation are treated as design constraints rather than disclaimers. That lineage is why the substrate is the kind of thing a method can be tested against at all. But the substrate is the test bench, not the contribution. What this paper offers is an evaluation method --- a criterion-validity gate --- that stopped us from reporting a clean result we had not in fact earned, and that generalizes to any threshold-based reproducibility assessment in RL. Section~\ref{sec:1.2} sets out the gap --- a threshold validated against outcome-spread rather than window-noise --- and Section~\ref{sec:1.3}, the gate that closes it.
 
-\subsection{}
+\subsection{The gap: validating thresholds against window noise}
 \label{sec:1.2}
 
 RL evaluation rarely pre-registers. When it does, the threshold is registered, but not whether the threshold is separable from the noise in the window it is measured against. That is the gap.
 
 A threshold $T$ can be validated against the outcome span --- peak to end --- and look meaningful. The same $T$ can be noise-dominated in the window where $T$ is actually applied --- \code{ep\_init}, the mean of returns over a defined early-training window. When it is, whether a given seed passes is close to a coin flip. The result reads as a finding about the agent; it is a finding about the window.
 
-\subsection{}
+\subsection{Contribution: the criterion-validity gate}
 \label{sec:1.3}
 
 Our contribution is a criterion-validity gate: a pre-registered check, run before the threshold is applied, that $T$ is separable from the noise-difference in its application window. Operationally we require that $T$ sit at least roughly twice above the noise-difference in the window. The gate is registered together with the methodology, not added afterwards.
 
 We report three cases in which the gate changed the outcome. None are hypothetical --- each is measured, and each points to a committed assumption in an ADR chain that forms the paper's reproducible appendix. The negative outcome is the contribution: that we could not decide the phenomenon, together with the precise reason no reasonable amount of compute would have changed that, is a stronger methodological result than a number we would have had to force.
 
-\subsection{}
+\subsection{Scope and delimitations}
 \label{sec:1.4}
 
 The paper delimits what it claims. It does not claim that the phenomenon we observed --- climb-then-slide, where the agent reaches baseline and does not hold it --- is solved. It claims no fix; warm-start, KL-anchoring, and reward-reshaping are all unchosen and lie downstream. It does not claim the simulator is realistic; the sim-to-real gap is undocumented until v0.4, and we note this explicitly. The diagnosis we made --- that the slide sits on the optimisation side, not in the reward landscape --- is diagnosis, not fix, and is presented as such.
+
+\section{Related Work}
+\label{sec:related}
+
+[POSITIONING: gate vs Henderson --- reproducibility-crisis framing]
+\citet{henderson2018deep}.
+
+[POSITIONING: Agarwal/rliable --- reliable evaluation with few seeds, closest neighbour]
+\citet{agarwal2021deep}.
+
+[POSITIONING: Colas --- seed-count / statistical separability, the direct precursor]
+\citet{colas2018howmany} and \citet{colas2019hitchhiker}.
+
+[POSITIONING: Gundersen \& Kjensmo --- reproducibility-as-field-measurement]
+\citet{gundersen2018state}.
 
 \section{Methods}
 
@@ -143,31 +152,31 @@ All five seeds in $\{6 \ldots 10\}$ climb to a peak and slide back. In form, cli
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig1_climb_then_slide.pdf}
-\caption{Climb-then-slide in FORM on N=5 seeds $\{6 \ldots 10\}$. All five seeds climb to a peak and slide back (climb-then-slide in FORM = 5/5; slide-direction confirmed universal across all five seeds). Dots mark each seed's peak update. Whether the amplitude passes $T = 0.0922$ for the climb-leg depends on the \code{ep\_init} measurement window --- that distinction is the subject of Fig.~\ref{fig:3}.}
+\caption{Climb-then-slide in FORM on N=5 seeds $\{6 \ldots 10\}$. All five seeds climb to a peak and slide back (climb-then-slide in FORM = 5/5; slide-direction confirmed universal across all five seeds). Dots mark each seed's peak update. Whether the amplitude passes $T = 0.0922$ for the climb-leg depends on the \code{ep\_init} measurement window --- that distinction is the subject of Fig.~\ref{fig:2}.}
 \label{fig:1}
 \end{figure}
 
 \subsection{The direction-symmetric confounder}
 \label{sec:3.2}
 
-We write CTS (climb-then-slide) when we refer to whether a seed reproduced the phenomenon against the threshold, and $M$, $M'$, $M''$ for the reproduction count in each of the three measurement passes. The same measurement window lied both ways (Fig.~\ref{fig:3}). With the original \code{ep\_init} window $[100, 150]$, seeds 6 and 8 measured their climb leg below $T$ --- not reproduced. Moved to the buffer-full window, the same two passed above $T$. The window had hidden real climb-then-slide. At the same time seed 10 went the other way: above $T$ in the original window, below $T$ in the revised one. The window had fabricated a phenomenon that was not there.
+We write CTS (climb-then-slide) when we refer to whether a seed reproduced the phenomenon against the threshold, and $M$, $M'$, $M''$ for the reproduction count in each of the three measurement passes. The same measurement window lied both ways (Fig.~\ref{fig:2}). With the original \code{ep\_init} window $[100, 150]$, seeds 6 and 8 measured their climb leg below $T$ --- not reproduced. Moved to the buffer-full window, the same two passed above $T$. The window had hidden real climb-then-slide. At the same time seed 10 went the other way: above $T$ in the original window, below $T$ in the revised one. The window had fabricated a phenomenon that was not there.
 
-That is the key finding. A window change that had only hidden, or only fabricated, could be dismissed as a one-way bias one corrects for. That the same change moved two seeds into a positive result and a third out of it, simultaneously, shows that which seeds pass is governed by the measurement choice, not by the agent. The numbers shifted accordingly: $M$ against the original window was $2/5$, $M'$ against the buffer-full one was $3/5$ (Table~\ref{tab:2}).
+That is the key finding. A window change that had only hidden, or only fabricated, could be dismissed as a one-way bias one corrects for. That the same change moved two seeds into a positive result and a third out of it, simultaneously, shows that which seeds pass is governed by the measurement choice, not by the agent. The numbers shifted accordingly: $M$ against the original window was $2/5$, $M'$ against the buffer-full one was $3/5$ (Table~\ref{tab:1}).
 
 \begin{figure}[!ht]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig3_confounder_symmetric.pdf}
 \caption{Direction-symmetric \code{ep\_init}-window confounder on seeds $\{6 \ldots 10\}$ (KEY). Each arrow shows one seed's climb shifting between \code{ep\_init} windows: tail = original $[100, 150]$ window; head = revised buffer-full window. The confounder lied both ways: seeds 6 and 8 had real CTS hidden by buffer noise (green, $\times \to \checkmark$); seed 10's apparent CTS was a buffer-noise artefact (magenta, $\checkmark \to \times$). $M: 2/5 \to M': 3/5$. Marker colours are neutral by design --- the colour story here is flip direction (arrows). Fig.~\ref{fig:1}'s per-seed colours code seed identity, a separate scheme.}
-\label{fig:3}
+\label{fig:2}
 \end{figure}
 
-\begin{table}[h]
+\begin{table}[!ht]
 \centering
 \caption{Phenomenon-reproduction count across measurement passes. Climb-then-slide reproduction count $M / M' / M''$ across the three measurement passes on the same phenomenon-question. $T = 0.0922$ (locked from the original pre-registration); the only thing that changes is the \code{ep\_init} window definition.}
-\label{tab:2}
+\label{tab:1}
 \small
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}l p{2.0cm} l p{1.7cm} p{1.8cm} c p{3.5cm}@{}}
+\begin{tabular}{@{}l p{2.0cm} l p{1.4cm} p{1.5cm} c p{2.8cm}@{}}
 \toprule
 Pass & Measurement pass & Seeds & \code{ep\_init} window & Gate & Count & Reading \\
 \midrule
@@ -183,7 +192,7 @@ $M''$  & N=15 escalation             & $\{11 \ldots 20\}$ added & revised buffer
 
 \vspace{0.5em}
 
-\begin{tabular}{@{}r r r c c p{5cm}@{}}
+\begin{tabular}{@{}r r r c c p{4.3cm}@{}}
 \toprule
 Seed & climb ($M$, $[100,150]$) & climb ($M'$, revised) & CTS $M$ & CTS $M'$ & Flip \\
 \midrule
@@ -199,26 +208,26 @@ Seed & climb ($M$, $[100,150]$) & climb ($M'$, revised) & CTS $M$ & CTS $M'$ & F
 \subsection{The mechanism}
 \label{sec:3.3}
 
-On the seeds that reproduce climb-then-slide, the SIG-EXPLORATION signature holds (Fig.~\ref{fig:2}). The variance in the policy does not collapse during peak, and the critic is converged low. The slide is the optimisation side of a wide-variance policy, not a result of variance collapse. The pattern is the same on all reproducing seeds, across both measurement passes.
+On the seeds that reproduce climb-then-slide, the SIG-EXPLORATION signature holds (Fig.~\ref{fig:3}). The variance in the policy does not collapse during peak, and the critic is converged low. The slide is the optimisation side of a wide-variance policy, not a result of variance collapse. The pattern is the same on all reproducing seeds, across both measurement passes.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig2_sig_exploration.pdf}
 \caption{SIG-EXPLORATION signature on seed 9 (CTS-reproducing in both measurement passes). Top panel shows the same \code{ep\_return\_mean\_recent} series as Fig.~\ref{fig:1}, zoomed in on the buffer-full eligible region (update $\geq 841$); y-axis values are identical where the x-axes overlap (e.g., seed 9 peak $= 0.2379$ at update 2102 in both figures). Variance (\code{actor\_logstd}) does not collapse during peak; critic (\code{value\_loss}) is converged low. The mechanism (SIG-EXPLORATION) holds: slide is the optimisation side of a wide-variance policy, not variance-collapse. Same pattern on all CTS-reproducing seeds across both passes.}
-\label{fig:2}
+\label{fig:3}
 \end{figure}
 
 \subsection{The gate passed, then failed}
 \label{sec:3.4}
 
-In the criterion-validity reanalysis the gate passed --- $T/\sigma_\mathrm{diff} = 2.73$ --- and $M'$ landed at $3/5$. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, $\{11 \ldots 20\}$, for N=15. There the gate failed: $T/\sigma_\mathrm{diff} = 1.80$. The same training configuration produced a median noise scale roughly $50\%$ higher on the new seed set, $0.0362$ against $0.0239$ (Table~\ref{tab:1}). The stop rule was triggered before $M''$ was tallied.
+In the criterion-validity reanalysis the gate passed --- $T/\sigma_\mathrm{diff} = 2.73$ --- and $M'$ landed at $3/5$. Borderline, and inconclusive on five seeds. The N=15 escalation added ten new seeds, $\{11 \ldots 20\}$, for N=15. There the gate failed: $T/\sigma_\mathrm{diff} = 1.80$. The same training configuration produced a median noise scale roughly $50\%$ higher on the new seed set, $0.0362$ against $0.0239$ (Table~\ref{tab:2}). The stop rule was triggered before $M''$ was tallied.
 
 The finding sits there. Measurability itself is seed-variable: the noise scale $T$ was anchored against on one seed set does not hold on another under identical configuration. That is one level deeper than the phenomenon. We cannot decide whether climb-then-slide is robust --- not because we lack data, but because the threshold is not stably applicable across seeds.
 
-\begin{table}[h]
+\begin{table}[!ht]
 \centering
 \caption{Criterion-validity gate: criterion-validity reanalysis PASS vs N=15 escalation FAIL. Per-seed inter-update SD of \code{ep\_return\_mean\_recent} over each seed's revised buffer-full \code{ep\_init} window (first 51 updates with \code{ep\_return\_n\_recent} $\geq 100$). Gate fires if $T / (\sigma_\mathrm{median} \times \sqrt{2}) \geq \sim 2$.}
-\label{tab:1}
+\label{tab:2}
 \small
 \begin{tabular}{@{}rrl@{}}
 \toprule
@@ -313,9 +322,12 @@ What we offer the field is not an answer to climb-then-slide. It is a method tha
 \section{The ADR chain as a reproducible evidence trail}
 \label{app:A}
 
+\subsection{ADR evidence trail}
+\label{app:A.1}
+
 The entire decision-and-evidence trail for the evaluation lives as a chronological ADR chain, stub before resolution. Every claim in Section~\ref{sec:1.3}--Section~\ref{sec:3.5} (results, anchoring seed, gate, falsification structure, verdict-stability resampling) points to a pre-registered ADR as the lock for the assumption it rests on: the stub locked the methodology before data; the resolution reported the outcome against the already-frozen methodology. ADRs are cited by number (their permanent identifier), and the reproducible substrate for the verdict-stability analysis (ADR 0013) is archived as an immutable, timestamped OSF Registration (DOI in the note below the table). The main text above uses semantic descriptions (``the original pre-registration'', ``the criterion-validity reanalysis'', ``the N=15 escalation'').
 
-\begin{table}[h]
+\begin{table}[!ht]
 \centering
 \small
 \begin{tabular}{@{}p{0.40\linewidth}p{0.12\linewidth}p{0.40\linewidth}@{}}
@@ -345,7 +357,8 @@ Source-attribution correction (4 verified refs)     & 2026-06-06 & The four Sect
 
 \noindent The full reproducible substrate for the verdict-stability analysis (ADR 0013) --- the 15-seed frozen summary, the runnable gate and CTS tally, the freezing script, and the exhaustive $k=5$ gate-verdict-ratio distribution (all $3003$ draws) --- is archived as an immutable, timestamped OSF Registration: DOI \href{https://doi.org/10.17605/OSF.IO/SCX59}{10.17605/OSF.IO/SCX59}. This is the durable, citable anchor for the analysis, independent of any repository commit.
 
-\subsection*{Reproducibility}
+\subsection{Reproducibility}
+\label{app:A.2}
 
 {\sloppy
 All training runs live as \code{metrics.jsonl} + \code{agent.pt} + \code{best\_so\_far.pt} under \code{\textasciitilde/chatcat-rl-runs/} (persistent path, documented in ADR 0010 Step 1.5). The plotting script \code{paper/plot\_methods\_figures.py} regenerates Fig.~1--3 and Tables~1--2 from the same \code{metrics.jsonl} files; no new training is required. Fig.~4 is regenerated from the committed artefact \code{paper/analysis/gate\_ratio\_distribution\_k5.csv} --- the exhaustive $k=5$ gate-verdict distribution produced by \code{paper/analysis/gate\_distribution.py} from the frozen \code{seed\_summary\_frozen.csv} --- so the verdict-stability figure is reproducible from committed substrate, not from a transient run. Vector export (PDF) for submission is produced by the same script.\par}

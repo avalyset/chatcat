@@ -1,0 +1,81 @@
+\begin{thebibliography}{10}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Agarwal et~al.(2021)Agarwal, Schwarzer, Castro, Courville, and
+  Bellemare]{agarwal2021deep}
+Rishabh Agarwal, Max Schwarzer, Pablo~Samuel Castro, Aaron Courville, and
+  Marc~G. Bellemare.
+\newblock Deep reinforcement learning at the edge of the statistical precipice.
+\newblock In \emph{Advances in Neural Information Processing Systems},
+  volume~34, pages 29304--29320, 2021.
+\newblock arXiv:2108.13264.
+
+\bibitem[Anthes(2022)]{anthes2022}
+Emily Anthes.
+\newblock Did my cat just hit on me? {A}n adventure in pet translation.
+\newblock The New York Times, August 2022.
+
+\bibitem[Colas et~al.(2018)Colas, Sigaud, and Oudeyer]{colas2018howmany}
+C{\'e}dric Colas, Olivier Sigaud, and Pierre-Yves Oudeyer.
+\newblock How many random seeds? {S}tatistical power analysis in deep
+  reinforcement learning experiments.
+\newblock arXiv preprint arXiv:1806.08295, 2018.
+\newblock URL \url{https://arxiv.org/abs/1806.08295}.
+
+\bibitem[Colas et~al.(2019)Colas, Sigaud, and Oudeyer]{colas2019hitchhiker}
+C{\'e}dric Colas, Olivier Sigaud, and Pierre-Yves Oudeyer.
+\newblock A {H}itchhiker's guide to statistical comparisons of reinforcement
+  learning algorithms.
+\newblock In \emph{Reproducibility in Machine Learning Workshop at ICLR 2019},
+  2019.
+\newblock URL \url{https://openreview.net/forum?id=ryx0N3IaIV}.
+
+\bibitem[Gundersen and Kjensmo(2018)]{gundersen2018state}
+Odd~Erik Gundersen and Sigbj{\o}rn Kjensmo.
+\newblock State of the art: Reproducibility in artificial intelligence.
+\newblock In \emph{Proceedings of the Thirty-Second AAAI Conference on
+  Artificial Intelligence}, pages 1644--1651. AAAI Press, 2018.
+\newblock \doi{10.1609/aaai.v32i1.11503}.
+
+\bibitem[Henderson et~al.(2018)Henderson, Islam, Bachman, Pineau, Precup, and
+  Meger]{henderson2018deep}
+Peter Henderson, Riashat Islam, Philip Bachman, Joelle Pineau, Doina Precup,
+  and David Meger.
+\newblock Deep reinforcement learning that matters.
+\newblock In \emph{Proceedings of the AAAI Conference on Artificial
+  Intelligence}, pages 3207--3214, 2018.
+\newblock \doi{10.1609/aaai.v32i1.11694}.
+
+\bibitem[Mancini and Nannoni(2023)]{mancini2023}
+Clara Mancini and Eleonora Nannoni.
+\newblock Ethical frameworks for animal-computer interaction, 2023.
+
+\bibitem[Ntalampiras et~al.(2019)Ntalampiras, Ludovico, Presti, Prato~Previde,
+  Battini, Cannas, Palestrini, and Mattiello]{ntalampiras2019}
+Stavros Ntalampiras, Luca~A. Ludovico, Giorgio Presti, Emanuela Prato~Previde,
+  Monica Battini, Simona Cannas, Clara Palestrini, and Silvana Mattiello.
+\newblock Automatic classification of cat vocalizations emitted in different
+  contexts.
+\newblock \emph{Animals}, 9\penalty0 (8):\penalty0 543, 2019.
+\newblock \doi{10.3390/ani9080543}.
+
+\bibitem[Schneiders et~al.(2024)Schneiders, Benford, Mancini, Mills,
+  et~al.]{schneiders2024}
+Eike Schneiders, Steve Benford, Clara Mancini, Daniel~S. Mills, et~al.
+\newblock Designing multispecies worlds for robots, cats, and humans.
+\newblock In \emph{Proceedings of the 2024 CHI Conference on Human Factors in
+  Computing Systems}. ACM, 2024.
+\newblock CHI 2024 Best Paper. Project credit: Blast Theory, Mancini, Mills,
+  University of Nottingham.
+
+\bibitem[Van~Patter and Blattner(2020)]{vanpatter2020}
+Lauren~E. Van~Patter and Charlotte Blattner.
+\newblock Advancing ethical principles for non-invasive, respectful research
+  with nonhuman animal participants.
+\newblock \emph{Society \& Animals}, 28\penalty0 (2):\penalty0 171--190, 2020.
+
+\end{thebibliography}

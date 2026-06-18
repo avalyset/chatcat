@@ -1,0 +1,11 @@
+% Minimal trimspaces.sty stub — provides \trim@spaces for environ package
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{trimspaces}[2009/09/17 v1.1 Trim spaces around a token list]
+
+\def\trim@spaces#1{\romannumeral\trim@spaces@aux#1\trim@spaces@end}
+\long\def\trim@spaces@aux#1\trim@spaces@end{%
+  \trim@spaces@i #1 \@nil%
+}
+\long\def\trim@spaces@i#1 \@nil{\trim@spaces@ii#1\@nil}
+\long\def\trim@spaces@ii #1\@nil{#1}
+\def\trimspaces#1{\edef#1{\trim@spaces{#1}}}
